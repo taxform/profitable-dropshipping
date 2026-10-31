@@ -1,0 +1,59 @@
+import type { Config, Context } from '@netlify/functions'
+import { createHmac, timingSafeEqual } from 'node:crypto'
+import { and, eq } from 'drizzle-orm'
+import { db } from '../../db/index.js'
+import { orders } from '../../db/schema.js'
+import { cjEnabled } from '../../lib/cj.js'
+import { forwardOrder } from '../../lib/sourcing.js'
+
+function verify(payload: string, header: string, secret: string) {
+  const parts = Object.fromEntries(header.split(',').map((kv) => kv.split('=') as [string, string]))
+  const t = Number(parts.t)
+  if (!t || Math.abs(Date.now() / 1000 - t) > 300) return false
+  const expected = createHmac('sha256', secret).update(`${t}.${payload}`).digest()
+  return header
+    .split(',')
+    .filter((kv) => kv.startsWith('v1='))
+    .some((kv) => {
+      const sig = Buffer.from(kv.slice(3), 'hex')
+      return sig.length === expected.length && timingSafeEqual(sig, expected)
+    })
+}
+
+export default async (req: Request, context: Context) => {
+  const secret = Netlify.env.get('STRIPE_WEBHOOK_SECRET')
+  if (!secret) return new Response('Webhook secret not configured', { status: 503 })
+  const payload = await req.text()
+  if (!verify(payload, req.headers.get('stripe-signature') ?? '', secret)) return new Response('Bad signature', { status: 400 })
+
+  const event = JSON.parse(payload)
+  const session = event.data?.object
+  const orderId = session?.metadata?.order_id ?? session?.client_reference_id
+
+  if (orderId && (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded')) {
+    if (session.payment_status === 'paid') {
+      const details = session.collected_information?.shipping_details ?? session.shipping_details ?? null
+      const [paid] = await db
+        .update(orders)
+        .set({
+          status: 'paid',
+          paidAt: new Date(),
+          updatedAt: new Date(),
+          name: details?.name ?? session.customer_details?.name ?? null,
+          shippingAddress: details?.address ? { ...details.address, phone: session.customer_details?.phone ?? null } : null,
+        })
+        .where(and(eq(orders.publicId, orderId), eq(orders.status, 'pending_payment')))
+        .returning()
+      // Place the order with CJ after acknowledging Stripe; failures are noted on the order and retried by cj-sync.
+      if (paid && cjEnabled()) context.waitUntil(forwardOrder(paid.publicId).catch((e) => console.error('CJ forward', paid.publicId, e.message)))
+    }
+  } else if (orderId && event.type === 'checkout.session.expired') {
+    await db
+      .update(orders)
+      .set({ status: 'cancelled', updatedAt: new Date(), notes: 'Checkout session expired' })
+      .where(and(eq(orders.publicId, orderId), eq(orders.status, 'pending_payment')))
+  }
+  return new Response('ok')
+}
+
+export const config: Config = { path: '/api/stripe-webhook', method: 'POST' }

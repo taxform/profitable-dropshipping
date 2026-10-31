@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Your order — Skabba Deals</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="wrap prose" data-order>
+    <h1>Track an order</h1>
+    <p>Enter the order number from your confirmation email.</p>
+    <form class="lookup" data-lookup><input class="field" name="id" placeholder="SD-XXXXXXXX" required aria-label="Order number"><button class="btn">Look up</button></form>
+  </main>
+  <script type="module">
+    import { money, clearCart } from '/app.js'
+    const params = new URLSearchParams(location.search)
+    const id = params.get('id')
+    const main = document.querySelector('[data-order]')
+    document.querySelector('[data-lookup]').addEventListener('submit', (e) => {
+      e.preventDefault()
+      location.search = '?id=' + encodeURIComponent(e.target.id.value.trim().toUpperCase())
+    })
+    if (id) {
+      if (params.get('paid')) clearCart()
+      const res = await fetch('/api/order?id=' + encodeURIComponent(id))
+      const o = await res.json()
+      if (!res.ok) {
+        main.insertAdjacentHTML('beforeend', `<p class="err">We couldn't find order ${id.replace(/[<>&]/g, '')}. Check the number and try again.</p>`)
+      } else {
+        const flow = ['paid', 'ordered', 'shipped', 'delivered']
+        const at = flow.indexOf(o.status)
+        const headline = {
+          pending_payment: params.get('paid') ? 'Payment received — confirming…' : 'Order reserved',
+          paid: 'Thank you! Your order is confirmed.',
+          ordered: 'Your order is being prepared.',
+          shipped: 'Your order is on its way.',
+          delivered: 'Delivered. Enjoy!',
+          cancelled: 'This order was cancelled.',
+          refunded: 'This order was refunded.',
+        }[o.status]
+        main.innerHTML = `<div class="eyebrow">Order ${o.id}</div><h1>${headline}</h1>
+          ${o.status === 'pending_payment' && !params.get('paid') ? `<p>Online payment isn't switched on yet, so we've saved your order and will email you a secure payment link shortly. Nothing has been charged.</p>` : '<p>A confirmation is on its way to your inbox. Tracking follows as soon as your parcel ships.</p>'}
+          <div class="status-card">
+            ${at >= 0 ? `<div class="steps">${['Confirmed', 'Preparing', 'Shipped', 'Delivered'].map((s, i) => `<div class="${i <= at ? 'on' : ''}">${s}</div>`).join('')}</div>` : ''}
+            ${o.trackingNumber ? `<p><b>Tracking:</b> <a href="https://parcelsapp.com/en/tracking/${encodeURIComponent(o.trackingNumber)}" target="_blank" rel="noopener">${o.trackingNumber.replace(/[<>&]/g, '')}</a></p>` : ''}
+            ${o.items.map((l) => `<div class="row"><span>${l.qty} × ${l.name}</span><span>${money(l.unit * l.qty)}</span></div>`).join('')}
+            <hr style="border:0;border-top:1px solid var(--line);margin:14px 0">
+            ${o.discount ? `<div class="row save"><span>You saved</span><span>${money(o.discount)}</span></div>` : ''}
+            <div class="row"><span>Shipping</span><span>${o.shipping ? money(o.shipping) : 'Free'}</span></div>
+            <div class="row total"><span>Total</span><span>${money(o.total)}</span></div>
+          </div>
+          <p style="margin-top:28px"><a class="btn btn--ghost" href="/#shop">Keep shopping</a></p>`
+        const tries = Number(sessionStorage.getItem('sd-poll-' + o.id) || 0)
+        if (o.status === 'pending_payment' && params.get('paid') && tries < 6) {
+          sessionStorage.setItem('sd-poll-' + o.id, tries + 1)
+          setTimeout(() => location.reload(), 2500)
+        }
+      }
+    }
+  </script>
+</body>
+</html>

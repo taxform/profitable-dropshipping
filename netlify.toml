@@ -1,0 +1,29 @@
+[build]
+  publish = "public"
+
+# CJdropshipping product photos, served through the Image CDN.
+[images]
+  remote_images = ["https://.*\\.cjdropshipping\\.com/.*", "https://.*\\.aliyuncs\\.com/.*", "https://.*\\.alicdn\\.com/.*"]
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/products/:slug"
+  to = "/product.html"
+  status = 200
+
+[[redirects]]
+  from = "/order"
+  to = "/order.html"
+  status = 200
+
+[[headers]]
+  for = "/admin*"
+  [headers.values]
+    X-Robots-Tag = "noindex"
+
+[[headers]]
+  for = "/images/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"

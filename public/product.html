@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Skabba Deals</title>
+  <meta name="description" content="Kitchen gadgets with free tracked shipping over $49 and 30-day returns.">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <main class="pdp" data-pdp>
+    <div class="wrap"><div class="pdp__media skeleton"></div><div><div class="skeleton" style="height:60px;width:80%"></div><div class="skeleton" style="height:180px;margin-top:24px"></div></div></div>
+  </main>
+  <section class="section" style="padding-bottom:0"><div class="wrap">
+    <div class="section-head"><div><div class="eyebrow">Complete the set</div><h2>Add two, save 20%</h2></div></div>
+    <div class="grid grid--even" data-related></div>
+  </div></section>
+
+  <script type="module">
+    import { getCatalog, money, img, addToCart } from '/app.js'
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+    const slug = location.pathname.split('/').filter(Boolean).pop()
+    const { products, offers } = await getCatalog()
+    const p = products.find((x) => x.slug === slug)
+    const main = document.querySelector('[data-pdp]')
+    if (!p) {
+      main.innerHTML = `<div class="wrap"><div class="empty"><h3>We couldn't find that gadget</h3><p>It may have sold out or moved.</p><a class="btn" href="/#shop">Back to the shop</a></div></div>`
+    } else {
+      const url = `https://skabbadeals.com/products/${p.slug}`
+      document.title = `${p.name} — Skabba Deals`
+      document.querySelector('meta[name=description]').content = `${p.tagline} ${p.description}`.slice(0, 158)
+      document.head.insertAdjacentHTML('beforeend', `<link rel="canonical" href="${url}"><script type="application/ld+json">${JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: p.image.startsWith('http') ? p.image : `https://skabbadeals.com${p.image}`, sku: p.slug, brand: { '@type': 'Brand', name: 'Skabba Deals' },
+        offers: { '@type': 'Offer', url, priceCurrency: 'USD', price: (p.price / 100).toFixed(2), availability: 'https://schema.org/InStock' },
+      })}<\/script>`)
+      const off = p.compareAt ? Math.round((1 - p.price / p.compareAt) * 100) : 0
+      const t2 = offers.bundleTiers.find((t) => t.minQty === 2).pct
+      const t3 = offers.bundleTiers.find((t) => t.minQty === 3).pct
+      const opt = (qty, label, pct, checked) => {
+        const each = Math.round(p.price * (1 - pct / 100))
+        return `<label><span class="opt"><input type="radio" name="qty" value="${qty}" ${checked ? 'checked' : ''}><span>${label}${pct ? `<small>Save ${pct}% · ${money(each)} each</small>` : ''}</span></span><b>${money(each * qty)}</b></label>`
+      }
+      main.innerHTML = `<div class="wrap">
+        <div class="pdp__media"><img src="${img(p.image, 1100)}" alt="${esc(p.name)}" fetchpriority="high"></div>
+        <div class="reveal">
+          <div class="crumbs"><a href="/">Home</a> / <a href="/#shop">${p.category}</a></div>
+          <h1>${esc(p.name)}</h1>
+          <div class="tagline">${esc(p.tagline)}</div>
+          <div class="pdp__price">${money(p.price)}${off >= 5 ? ` <s>${money(p.compareAt)}</s><span class="pill">Save ${off}%</span>` : ''}</div>
+          <div>
+            <form class="qty-pick" data-buy>
+              ${opt(1, 'Just one', 0, true)}${opt(2, 'Two (one to gift)', t2)}${opt(3, 'Three', t3)}
+              <button class="btn btn--block" type="submit">Add to cart</button>
+            </form>
+            <p class="pdp__desc">${esc(p.description)}</p>
+            <ul class="ticks">${p.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
+            <div class="meta"><div><b>Ships tracked</b>Arrives in ${p.shipsIn}</div><div><b>Free shipping</b>On orders over ${money(offers.freeShippingThreshold)}</div><div><b>30-day returns</b>Refund if it isn't for you</div><div><b>Secure checkout</b>Cards, Apple Pay, Google Pay</div></div>
+          </div>
+        </div></div>`
+      main.querySelector('[data-buy]').addEventListener('submit', (e) => {
+        e.preventDefault()
+        addToCart(p.slug, Number(new FormData(e.target).get('qty')))
+      })
+      document.querySelector('[data-related]').innerHTML = products
+        .filter((x) => x.slug !== p.slug)
+        .slice(0, 3)
+        .map((x) => `<article class="card">
+          <a class="card__media" href="/products/${x.slug}"><img src="${img(x.image, 640)}" alt="${esc(x.name)}" loading="lazy"></a>
+          <button class="quick-add" data-add="${x.slug}" data-open="false">+ Quick add</button>
+          <div class="card__body"><div><h3><a href="/products/${x.slug}">${esc(x.name)}</a></h3><p>${esc(x.tagline)}</p></div><div class="price">${money(x.price)}${x.compareAt ? `<s>${money(x.compareAt)}</s>` : ''}</div></div>
+        </article>`)
+        .join('')
+    }
+  </script>
+</body>
+</html>

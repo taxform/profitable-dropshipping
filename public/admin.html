@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Store dashboard — Skabba Deals</title>
+  <meta name="robots" content="noindex">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    body { background: var(--paper); }
+    .adm { padding: 40px 0 80px; }
+    .adm h1 { font-size: 48px; }
+    .kpis { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 12px; margin: 28px 0 40px; }
+    .kpi { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; }
+    .kpi span { font-size: 12px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); }
+    .kpi b { display: block; font-family: var(--display); font-weight: 400; font-size: 32px; margin-top: 6px; font-variant-numeric: tabular-nums; }
+    .kpi.good b { color: var(--sage); }
+    .kpi.alert b { color: var(--clay); }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; background: #fff; border-radius: 14px; overflow: hidden; border: 1px solid var(--line); }
+    th, td { padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--line); vertical-align: top; }
+    th { font-size: 11px; letter-spacing: .1em; text-transform: uppercase; color: var(--ink-2); background: var(--oat); }
+    td.num, th.num { text-align: right; font-variant-numeric: tabular-nums; }
+    .tbl { overflow-x: auto; margin-bottom: 44px; }
+    h2 { font-size: 30px; margin-bottom: 16px; }
+    .st { font-size: 12px; font-weight: 600; padding: 3px 9px; border-radius: 99px; background: var(--oat-2); white-space: nowrap; }
+    .st.paid { background: var(--clay); color: #fff; }
+    .st.shipped, .st.delivered { background: var(--sage); color: #fff; }
+    .order-edit { display: grid; gap: 6px; min-width: 200px; }
+    .order-edit .field { padding: 6px 10px; font-size: 13px; }
+    .order-edit button { justify-self: start; padding: 6px 14px; font-size: 13px; }
+    .login { max-width: 380px; margin: 12vh auto; display: grid; gap: 12px; }
+    .warn { background: #fff4ec; border: 1px solid #ecc6ae; border-radius: 12px; padding: 14px 18px; margin-bottom: 24px; font-size: 14px; }
+    .tabs { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .thumb { width: 48px; height: 48px; object-fit: cover; border-radius: 8px; background: var(--oat); flex: none; }
+    .prod { display: flex; gap: 10px; align-items: center; min-width: 220px; }
+    .prod small { display: block; color: var(--ink-2); font-size: 12px; }
+    .acts { display: flex; gap: 6px; flex-wrap: wrap; }
+    .acts button, .sm { padding: 6px 12px; font-size: 13px; }
+    .price-form { display: flex; gap: 6px; justify-content: flex-end; align-items: center; }
+    .price-form input { width: 84px; padding: 6px 8px; font-size: 13px; text-align: right; }
+    .cj-results { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 12px; margin: 14px 0 44px; }
+    .cj-card { background: #fff; border: 1px solid var(--line); border-radius: 12px; padding: 10px; font-size: 13px; display: grid; gap: 6px; align-content: start; }
+    .cj-card img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--oat); }
+    .cj-panel { background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin: -28px 0 44px; }
+    .cj-panel form { display: flex; gap: 8px; }
+  </style>
+</head>
+<body>
+  <main class="wrap adm" data-root>
+    <form class="login" data-login>
+      <a class="logo" href="/">Skabba <em>Deals</em></a>
+      <h1 style="font-size:36px">Store dashboard</h1>
+      <input class="field" type="password" name="pw" placeholder="Admin password" required autocomplete="current-password">
+      <div class="err" data-err></div>
+      <button class="btn">Sign in</button>
+    </form>
+  </main>
+  <script type="module">
+    const money = (c) => (c < 0 ? '−$' : '$') + (Math.abs(c) / 100).toFixed(2)
+    const esc = (s) => String(s ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+    const root = document.querySelector('[data-root]')
+    let pw = sessionStorage.getItem('sd-admin') || ''
+    let filter = 'paid'
+    let searchFor = null
+    let searchQuery = ''
+    let searchHtml = ''
+
+    const api = (opts = {}) => fetch('/api/admin', { ...opts, headers: { authorization: 'Bearer ' + pw, 'content-type': 'application/json' } })
+    const cj = async (action, body = {}) => {
+      const res = await fetch('/api/admin/cj', { method: 'POST', headers: { authorization: 'Bearer ' + pw, 'content-type': 'application/json' }, body: JSON.stringify({ action, ...body }) })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'CJ request failed')
+      return data
+    }
+    const fee = (price) => Math.round(price * 0.029 + 30)
+
+    document.querySelector('[data-login]').addEventListener('submit', (e) => {
+      e.preventDefault()
+      pw = e.target.pw.value
+      load()
+    })
+
+    async function load() {
+      const res = await api()
+      const data = await res.json()
+      if (!res.ok) {
+        sessionStorage.removeItem('sd-admin')
+        const err = document.querySelector('[data-err]')
+        if (err) err.textContent = data.error
+        return
+      }
+      sessionStorage.setItem('sd-admin', pw)
+      render(data)
+    }
+
+    function render(d) {
+      const s = d.stats
+      const margin = s.revenue ? ((s.profit / s.revenue) * 100).toFixed(1) + '%' : '—'
+      const list = d.orders.filter((o) => filter === 'all' || o.status === filter)
+      root.innerHTML = `
+        <div class="section-head" style="margin-bottom:0"><div><a class="logo" href="/">Skabba <em>Deals</em></a><h1>Store dashboard</h1></div><button class="btn btn--ghost" data-logout>Sign out</button></div>
+        ${d.paymentsEnabled ? '' : `<div class="warn"><b>Payments are off.</b> Orders are saved as "pending payment" until you add your Stripe keys in the site's environment variables (see the setup notes).</div>`}
+        <div class="kpis">
+          <div class="kpi"><span>Revenue</span><b>${money(s.revenue)}</b></div>
+          <div class="kpi good"><span>Net profit</span><b>${money(s.profit)}</b></div>
+          <div class="kpi"><span>Net margin</span><b>${margin}</b></div>
+          <div class="kpi"><span>Paid orders</span><b>${s.paidOrders}</b></div>
+          <div class="kpi"><span>Avg. order</span><b>${money(s.aov)}</b></div>
+          <div class="kpi ${s.toFulfil ? 'alert' : ''}"><span>To fulfil</span><b>${s.toFulfil}</b></div>
+          <div class="kpi"><span>Unpaid / abandoned</span><b>${s.abandoned}</b></div>
+          <div class="kpi"><span>Subscribers</span><b>${s.subscribers}</b></div>
+        </div>
+
+        <h2>Products &amp; CJ sourcing</h2>
+        ${d.cjEnabled ? '' : `<div class="warn"><b>CJ isn't connected yet.</b> In CJdropshipping go to <i>My CJ → Authorization → API</i>, generate an API key, and save it as the <code>CJ_API_KEY</code> environment variable on this site. Then come back and press <i>Auto-match</i>.</div>`}
+        <div class="tabs">
+          <button class="btn sm" data-automatch-all ${d.cjEnabled ? '' : 'disabled'}>Auto-match unlinked products</button>
+          <button class="btn btn--ghost sm" data-refresh-all ${d.cjEnabled && d.sources.length ? '' : 'disabled'}>Refresh costs from CJ</button>
+          <span class="muted" data-cj-status>${d.sources.length}/${d.products.length} products linked to CJ · prices auto-set to 3× landed cost (min. $15 profit) unless you set one</span>
+        </div>
+        <div class="tbl" style="margin-bottom:${searchFor ? '28px' : '44px'}"><table>
+          <thead><tr><th>Product</th><th>CJ listing</th><th class="num">Item cost</th><th class="num">CJ shipping</th><th class="num">Price</th><th class="num">Margin / unit</th><th></th></tr></thead>
+          <tbody>${d.products.map(productRow).join('')}</tbody>
+        </table></div>
+        ${searchFor ? `<div class="cj-panel" data-cj-panel><h3 style="margin-bottom:10px">Find “${esc(d.products.find((p) => p.slug === searchFor).name)}” on CJ</h3>
+          <form data-cj-search><input class="field" name="q" value="${esc(searchQuery)}" style="flex:1"><button class="btn sm">Search</button><button class="btn btn--ghost sm" type="button" data-cj-close>Close</button></form>
+          <div class="cj-results" style="margin-bottom:0">${searchHtml}</div></div>` : ''}
+
+        <h2>Orders</h2>
+        ${d.cjEnabled ? `<div class="tabs"><button class="btn btn--ghost sm" data-tracking>Pull tracking from CJ</button><span class="muted">${d.cjAutoPay ? 'Paid orders are sent to CJ and paid from your CJ balance automatically.' : 'Paid orders are sent to CJ automatically — pay for them in your CJ dashboard (or set CJ_AUTO_PAY=true to pay from your CJ balance).'} Tracking syncs every 2 hours.</span></div>` : ''}
+        <div class="tabs">${['paid', 'ordered', 'shipped', 'pending_payment', 'all'].map((f) => `<button class="chip" aria-pressed="${f === filter}" data-filter="${f}">${f === 'paid' ? 'To fulfil' : f.replace('_', ' ')}</button>`).join('')}</div>
+        <div class="tbl"><table>
+          <thead><tr><th>Order</th><th>Customer &amp; ship to</th><th>Items (CJ SKU)</th><th class="num">Total</th><th class="num">Profit</th><th>Fulfilment</th></tr></thead>
+          <tbody>${list.length ? list.map(row).join('') : `<tr><td colspan="6" class="muted" style="text-align:center;padding:40px">No orders here yet.</td></tr>`}</tbody>
+        </table></div>
+
+        <h2>Unit economics</h2>
+        <div class="tbl"><table>
+          <thead><tr><th>Product</th><th>Supplier SKU</th><th class="num">Price</th><th class="num">Landed cost</th><th class="num">Card fee</th><th class="num">Margin / unit</th><th class="num">Margin %</th><th class="num">Units sold</th><th class="num">Profit to date</th></tr></thead>
+          <tbody>${d.unitEconomics.map((u) => {
+            const sold = d.topProducts.find((t) => t.slug === u.slug)
+            return `<tr><td>${esc(u.name)}</td><td>${esc(u.sku)} · ${esc(u.supplier)}</td><td class="num">${money(u.price)}</td><td class="num">${money(u.cost)}</td><td class="num">${money(u.fee)}</td><td class="num"><b>${money(u.margin)}</b></td><td class="num">${((u.margin / u.price) * 100).toFixed(0)}%</td><td class="num">${sold?.units ?? 0}</td><td class="num">${money(sold?.profit ?? 0)}</td></tr>`
+          }).join('')}</tbody>
+        </table></div>`
+
+      const status = root.querySelector('[data-cj-status]')
+      const run = async (btn, fn) => {
+        btn.disabled = true
+        try { await fn() } catch (e) { alert(e.message) }
+        btn.disabled = false
+      }
+      // One product per request: CJ allows ~1 API call per second.
+      const batch = async (btn, slugs, action, verb) => {
+        btn.disabled = true
+        const errors = []
+        for (const [i, slug] of slugs.entries()) {
+          status.textContent = `${verb} ${i + 1} of ${slugs.length}…`
+          try { await cj(action, { slug }) } catch (e) { errors.push(`${slug}: ${e.message}`) }
+        }
+        if (errors.length) alert(errors.join('\n'))
+        load()
+      }
+      root.querySelector('[data-automatch-all]').onclick = (e) => batch(e.target, d.products.filter((p) => !d.sources.some((s) => s.slug === p.slug)).map((p) => p.slug), 'automatch', 'Matching')
+      root.querySelector('[data-refresh-all]').onclick = (e) => batch(e.target, d.sources.map((s) => s.slug), 'refresh', 'Refreshing')
+      root.querySelectorAll('[data-act]').forEach((b) => (b.onclick = () => {
+        const { act, slug } = b.dataset
+        if (act === 'search') {
+          searchFor = slug
+          searchQuery = d.products.find((p) => p.slug === slug).cjQuery
+          searchHtml = ''
+          render(d)
+          return root.querySelector('[data-cj-search]').requestSubmit()
+        }
+        if (act === 'unlink' && !confirm('Unlink this product from CJ? It will go back to placeholder pricing.')) return
+        run(b, async () => { await cj(act, { slug }); await load() })
+      }))
+      root.querySelectorAll('[data-photo]').forEach((c) => (c.onchange = () => run(c, async () => { await cj('update', { slug: c.dataset.photo, useCjImage: c.checked }); await load() })))
+      root.querySelectorAll('[data-price]').forEach((f) => (f.onsubmit = (e) => {
+        e.preventDefault()
+        const v = e.submitter?.value === 'auto' ? null : Math.round(parseFloat(f.price.value) * 100)
+        run(f.querySelector('button'), async () => { await cj('update', { slug: f.dataset.price, price: v }); await load() })
+      }))
+      const panel = root.querySelector('[data-cj-panel]')
+      if (panel) {
+        panel.querySelector('[data-cj-close]').onclick = () => { searchFor = null; render(d) }
+        panel.querySelector('[data-cj-search]').onsubmit = (e) => {
+          e.preventDefault()
+          searchQuery = e.target.q.value
+          const out = panel.querySelector('.cj-results')
+          out.innerHTML = '<p class="muted">Searching CJ…</p>'
+          cj('search', { q: searchQuery })
+            .then((list) => {
+              searchHtml = list.length ? list.map((r) => `<div class="cj-card"><img src="${esc(r.image)}" alt="" loading="lazy"><b>${esc(r.name)}</b><span>${Number.isFinite(r.price) ? 'from ' + money(r.price) : ''} · ${r.listed} stores selling</span><button class="btn btn--ghost sm" data-pick="${esc(r.pid)}">Choose</button></div>`).join('') : '<p class="muted">No results. Try a shorter search.</p>'
+              out.innerHTML = searchHtml
+              wirePicks(out)
+            })
+            .catch((ex) => (out.innerHTML = `<p class="err">${esc(ex.message)}</p>`))
+        }
+        wirePicks(panel)
+      }
+      function wirePicks(scope) {
+        scope.querySelectorAll('[data-pick]').forEach((b) => (b.onclick = () => run(b, async () => {
+          const p = await cj('product', { pid: b.dataset.pick })
+          if (p.variants.length <= 1) return linkTo(p.pid, p.variants[0]?.vid)
+          b.closest('.cj-card').insertAdjacentHTML('beforeend', `<div style="display:grid;gap:4px">${p.variants.map((v) => `<button class="btn btn--ghost sm" data-vid="${esc(v.vid)}">${esc(v.name)} · ${money(v.price)}</button>`).join('')}</div>`)
+          b.remove()
+          scope.querySelectorAll('[data-vid]').forEach((vb) => (vb.onclick = () => run(vb, () => linkTo(p.pid, vb.dataset.vid))))
+        })))
+      }
+      async function linkTo(pid, vid) {
+        await cj('link', { slug: searchFor, pid, vid })
+        searchFor = null
+        await load()
+      }
+      root.querySelector('[data-tracking]')?.addEventListener('click', (e) => run(e.target, async () => {
+        const r = await cj('tracking')
+        alert(`Checked ${r.checked} orders with CJ, ${r.shipped} newly shipped.`)
+        await load()
+      }))
+      root.querySelectorAll('[data-forward]').forEach((b) => (b.onclick = () => run(b, async () => {
+        try { await cj('forward', { id: b.dataset.forward }) } finally { await load() }
+      })))
+
+      function productRow(p) {
+        const s = d.sources.find((x) => x.slug === p.slug)
+        const ours = `<div class="prod"><img class="thumb" src="${esc(p.image)}" alt=""><div><b>${esc(p.name)}</b></div></div>`
+        if (!s) return `<tr><td>${ours}</td><td class="muted">Not linked — placeholder price, can't be fulfilled</td><td></td><td></td><td></td><td></td>
+          <td><div class="acts"><button class="btn sm" data-act="automatch" data-slug="${p.slug}" ${d.cjEnabled ? '' : 'disabled'}>Auto-match</button><button class="btn btn--ghost sm" data-act="search" data-slug="${p.slug}" ${d.cjEnabled ? '' : 'disabled'}>Search CJ</button></div></td></tr>`
+        const landed = s.productCost + s.shippingCost
+        const margin = s.price - landed - fee(s.price)
+        return `<tr><td>${ours}</td>
+          <td><div class="prod"><img class="thumb" src="${esc(s.cjImage)}" alt=""><div>${esc(s.cjName)}${s.cjVariantName ? `<small>Variant: ${esc(s.cjVariantName)}</small>` : ''}<small>SKU ${esc(s.cjSku)} · ${esc(s.logisticName)} ${esc(s.shippingDays)} days</small><small>Synced ${new Date(s.syncedAt).toLocaleString()}</small>
+            <label><small><input type="checkbox" data-photo="${p.slug}" ${s.useCjImage ? 'checked' : ''}> Show CJ photo in store</small></label></div></div></td>
+          <td class="num">${money(s.productCost)}</td><td class="num">${money(s.shippingCost)}</td>
+          <td class="num"><form class="price-form" data-price="${p.slug}"><input class="field" name="price" type="number" step="0.01" min="1" value="${(s.price / 100).toFixed(2)}"><button class="btn btn--ghost sm">Set</button>${s.priceLocked ? `<button class="btn btn--ghost sm" value="auto" title="Go back to automatic pricing">Auto</button>` : ''}</form><small class="muted">${s.priceLocked ? 'set by you' : 'automatic'}</small></td>
+          <td class="num"><b>${money(margin)}</b><br><span class="muted">${((margin / s.price) * 100).toFixed(0)}%</span></td>
+          <td><div class="acts"><button class="btn btn--ghost sm" data-act="refresh" data-slug="${p.slug}">Refresh</button><button class="btn btn--ghost sm" data-act="search" data-slug="${p.slug}">Change</button><button class="btn btn--ghost sm" data-act="unlink" data-slug="${p.slug}">Unlink</button></div></td></tr>`
+      }
+
+      root.querySelector('[data-logout]').onclick = () => { sessionStorage.removeItem('sd-admin'); location.reload() }
+      root.querySelectorAll('[data-filter]').forEach((b) => (b.onclick = () => { filter = b.dataset.filter; render(d) }))
+      root.querySelectorAll('[data-edit]').forEach((f) =>
+        f.addEventListener('submit', async (e) => {
+          e.preventDefault()
+          const fd = Object.fromEntries(new FormData(f))
+          const btn = f.querySelector('button')
+          btn.disabled = true
+          const res = await api({ method: 'PATCH', body: JSON.stringify({ id: f.dataset.edit, ...fd }) })
+          btn.disabled = false
+          if (res.ok) load()
+          else alert((await res.json()).error)
+        }),
+      )
+
+      function row(o) {
+        const a = o.shippingAddress
+        const addr = a ? [a.line1, a.line2, [a.city, a.state, a.postal_code].filter(Boolean).join(' '), a.country, a.phone].filter(Boolean).map(esc).join('<br>') : '<span class="muted">Collected at payment</span>'
+        return `<tr>
+          <td><b>${o.publicId}</b><br><span class="muted">${new Date(o.createdAt).toLocaleString()}</span><br><span class="st ${o.status}">${o.status.replace('_', ' ')}</span>${o.promoCode ? `<br><span class="muted">${esc(o.promoCode)}</span>` : ''}</td>
+          <td>${esc(o.name)}${o.name ? '<br>' : ''}<a href="mailto:${esc(o.email)}">${esc(o.email)}</a><br>${addr}</td>
+          <td>${o.items.map((l) => `${l.qty} × ${esc(l.name)} <span class="muted">(${esc(l.sku)})</span>`).join('<br>')}</td>
+          <td class="num">${money(o.total)}</td>
+          <td class="num"><b>${money(o.profit)}</b><br><span class="muted">cost ${money(o.cogs)}</span></td>
+          <td><form class="order-edit" data-edit="${o.publicId}">
+            <select class="field" name="status">${d.statuses.map((st) => `<option ${st === o.status ? 'selected' : ''} value="${st}">${st.replace('_', ' ')}</option>`).join('')}</select>
+            <input class="field" name="supplierOrderId" placeholder="Supplier order #" value="${esc(o.supplierOrderId)}">
+            <input class="field" name="trackingNumber" placeholder="Tracking number" value="${esc(o.trackingNumber)}">
+            <button class="btn btn--ghost">Save</button>
+            ${o.status === 'paid' && d.cjEnabled ? `<button class="btn" type="button" data-forward="${o.publicId}">Send to CJ</button>` : ''}
+            ${o.notes ? `<span class="muted" style="font-size:12px">${esc(o.notes)}</span>` : ''}
+          </form></td></tr>`
+      }
+    }
+
+    if (pw) load()
+  </script>
+</body>
+</html>
