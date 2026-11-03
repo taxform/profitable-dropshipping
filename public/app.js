@@ -77,6 +77,7 @@ function chrome() {
       <div><a class="logo" href="/">Skabba <em>Deals</em></a><p class="muted" style="max-width:26em">Small kitchen tools that earn their counter space. Picked, tested and shipped tracked to your door.</p></div>
       <div><h4>Shop</h4><ul><li><a href="/#shop">All gadgets</a></li><li><a href="/#bundle">Bundle &amp; save</a></li><li><a href="/order">Track an order</a></li></ul></div>
       <div><h4>Help</h4><ul><li><a href="/shipping">Shipping</a></li><li><a href="/returns">Returns &amp; refunds</a></li><li><a href="/contact">Contact</a></li><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
+      <div class="footer-signup"><div><h4>Get 10% off your first order</h4><p>One email a month with new gadgets and member prices.</p></div><div><form data-signup="footer"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn" type="submit">Get the code</button></form><div class="msg" role="status"></div></div></div>
       <div class="fine"><span>© ${new Date().getFullYear()} Skabba Deals · skabbadeals.com</span><span>Prices in USD · Payments secured by Stripe</span></div>
     </div></footer>
     <div class="scrim" data-close-cart></div>

@@ -12,10 +12,23 @@
     gtag('config', 'G-43KLBMYB4T');
   </script>
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Skabba Deals</title>
-  <meta name="description" content="Kitchen gadgets with free tracked shipping over $49 and 30-day returns.">
+  <title>Skabba Deals — Kitchen gadgets that earn their counter space</title>
+  <meta name="description" content="Clever, tested kitchen gadgets at fair prices. Free tracked shipping over $49, buy 2 save 10%, buy 3+ save 20%, and 30-day returns.">
+  <link rel="canonical" href="https://skabbadeals.com/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="Skabba Deals">
+  <meta property="og:title" content="Skabba Deals — Kitchen gadgets that earn their counter space">
+  <meta property="og:description" content="Free tracked shipping over $49. Buy 2 save 10%, buy 3+ save 20%.">
+  <meta property="og:image" content="https://skabbadeals.com/.netlify/images?url=/images/spice-grinder.png&w=1200&h=630&fit=cover">
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Skabba Deals — Kitchen gadgets that earn their counter space">
+  <meta name="twitter:description" content="Free tracked shipping over $49. Buy 2 save 10%, buy 3+ save 20%.">
+  <meta name="theme-color" content="#f3ede4">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,50&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
@@ -34,13 +47,34 @@
     const { products, offers } = await getCatalog()
     const p = products.find((x) => x.slug === slug)
     const main = document.querySelector('[data-pdp]')
+    const setMeta = (name, attr, value) => {
+      let el = document.head.querySelector(`meta[${attr}="${name}"]`)
+      if (!el) {
+        el = document.createElement('meta')
+        el.setAttribute(attr, name)
+        document.head.appendChild(el)
+      }
+      el.setAttribute('content', value)
+    }
     if (!p) {
       main.innerHTML = `<div class="wrap"><div class="empty"><h3>We couldn't find that gadget</h3><p>It may have sold out or moved.</p><a class="btn" href="/#shop">Back to the shop</a></div></div>`
     } else {
       const url = `https://skabbadeals.com/products/${p.slug}`
+      const desc = `${p.tagline} ${p.description}`.slice(0, 158)
+      const shareImg = `https://skabbadeals.com/.netlify/images?url=${encodeURIComponent(p.image)}&w=1200&h=630&fit=cover`
       document.title = `${p.name} — Skabba Deals`
-      document.querySelector('meta[name=description]').content = `${p.tagline} ${p.description}`.slice(0, 158)
-      document.head.insertAdjacentHTML('beforeend', `<link rel="canonical" href="${url}"><script type="application/ld+json">${JSON.stringify({
+      document.querySelector('meta[name=description]').content = desc
+      document.head.insertAdjacentHTML('beforeend', `<link rel="canonical" href="${url}">`)
+      setMeta('og:title', 'property', `${p.name} — Skabba Deals`)
+      setMeta('og:description', 'property', desc)
+      setMeta('og:url', 'property', url)
+      setMeta('og:type', 'property', 'product')
+      setMeta('og:image', 'property', shareImg)
+      setMeta('twitter:title', 'name', `${p.name} — Skabba Deals`)
+      setMeta('twitter:description', 'name', desc)
+      setMeta('twitter:image', 'name', shareImg)
+      setMeta('twitter:card', 'name', 'summary_large_image')
+      document.head.insertAdjacentHTML('beforeend', `<script type="application/ld+json">${JSON.stringify({
         '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: p.image.startsWith('http') ? p.image : `https://skabbadeals.com${p.image}`, sku: p.slug, brand: { '@type': 'Brand', name: 'Skabba Deals' },
         offers: { '@type': 'Offer', url, priceCurrency: 'USD', price: (p.price / 100).toFixed(2), availability: 'https://schema.org/InStock' },
       })}<\/script>`)
@@ -51,8 +85,10 @@
         const each = Math.round(p.price * (1 - pct / 100))
         return `<label><span class="opt"><input type="radio" name="qty" value="${qty}" ${checked ? 'checked' : ''}><span>${label}${pct ? `<small>Save ${pct}% · ${money(each)} each</small>` : ''}</span></span><b>${money(each * qty)}</b></label>`
       }
+      const shareText = encodeURIComponent(`${p.name} — ${p.tagline}`)
+      const shareUrl = encodeURIComponent(url)
       main.innerHTML = `<div class="wrap">
-        <div class="pdp__media"><img src="${img(p.image, 1100)}" alt="${esc(p.name)}" fetchpriority="high"></div>
+        <div class="pdp__media"><img src="${img(p.image, 1100)}" alt="${esc(p.name)}" fetchpriority="high" decoding="async" width="1100" height="1100"></div>
         <div class="reveal">
           <div class="crumbs"><a href="/">Home</a> / <a href="/#shop">${p.category}</a></div>
           <h1>${esc(p.name)}</h1>
@@ -66,17 +102,39 @@
             <p class="pdp__desc">${esc(p.description)}</p>
             <ul class="ticks">${p.bullets.map((b) => `<li>${esc(b)}</li>`).join('')}</ul>
             <div class="meta"><div><b>Ships tracked</b>Arrives in ${p.shipsIn}</div><div><b>Free shipping</b>On orders over ${money(offers.freeShippingThreshold)}</div><div><b>30-day returns</b>Refund if it isn't for you</div><div><b>Secure checkout</b>Cards, Apple Pay, Google Pay</div></div>
+            <div class="share">
+              <span>Share this gadget</span>
+              <div class="share__row">
+                <button class="chip" data-share-native>Share…</button>
+                <a class="chip" href="https://www.facebook.com/sharer/sharer.php?u=${shareUrl}" target="_blank" rel="noopener">Facebook</a>
+                <a class="chip" href="https://twitter.com/intent/tweet?text=${shareText}&url=${shareUrl}" target="_blank" rel="noopener">X</a>
+                <a class="chip" href="https://pinterest.com/pin/create/button/?url=${shareUrl}&description=${shareText}" target="_blank" rel="noopener">Pinterest</a>
+                <button class="chip" data-share-copy>Copy link</button>
+              </div>
+            </div>
           </div>
         </div></div>`
       main.querySelector('[data-buy]').addEventListener('submit', (e) => {
         e.preventDefault()
         addToCart(p.slug, Number(new FormData(e.target).get('qty')))
       })
+      const nativeBtn = main.querySelector('[data-share-native]')
+      if (!navigator.share) nativeBtn.style.display = 'none'
+      nativeBtn.addEventListener('click', () => navigator.share({ title: p.name, text: `${p.name} — ${p.tagline}`, url }).catch(() => {}))
+      main.querySelector('[data-share-copy]').addEventListener('click', async (e) => {
+        try {
+          await navigator.clipboard.writeText(url)
+          e.target.textContent = 'Copied!'
+          setTimeout(() => (e.target.textContent = 'Copy link'), 1600)
+        } catch {
+          e.target.textContent = url
+        }
+      })
       document.querySelector('[data-related]').innerHTML = products
         .filter((x) => x.slug !== p.slug)
         .slice(0, 3)
         .map((x) => `<article class="card">
-          <a class="card__media" href="/products/${x.slug}"><img src="${img(x.image, 640)}" alt="${esc(x.name)}" loading="lazy"></a>
+          <a class="card__media" href="/products/${x.slug}"><img src="${img(x.image, 640)}" alt="${esc(x.name)}" loading="lazy" decoding="async" width="640" height="640"></a>
           <button class="quick-add" data-add="${x.slug}" data-open="false">+ Quick add</button>
           <div class="card__body"><div><h3><a href="/products/${x.slug}">${esc(x.name)}</a></h3><p>${esc(x.tagline)}</p></div><div class="price">${money(x.price)}${x.compareAt ? `<s>${money(x.compareAt)}</s>` : ''}</div></div>
         </article>`)
