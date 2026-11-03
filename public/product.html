@@ -75,8 +75,20 @@
       setMeta('twitter:image', 'name', shareImg)
       setMeta('twitter:card', 'name', 'summary_large_image')
       document.head.insertAdjacentHTML('beforeend', `<script type="application/ld+json">${JSON.stringify({
-        '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: p.image.startsWith('http') ? p.image : `https://skabbadeals.com${p.image}`, sku: p.slug, brand: { '@type': 'Brand', name: 'Skabba Deals' },
-        offers: { '@type': 'Offer', url, priceCurrency: 'USD', price: (p.price / 100).toFixed(2), availability: 'https://schema.org/InStock' },
+        '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: p.image.startsWith('http') ? p.image : `https://skabbadeals.com${p.image}`, sku: p.slug, category: p.category, brand: { '@type': 'Brand', name: 'Skabba Deals' },
+        seller: { '@type': 'Organization', name: 'Skabba Deals', url: 'https://skabbadeals.com/' },
+        offers: { '@type': 'Offer', url, priceCurrency: 'USD', price: (p.price / 100).toFixed(2), itemCondition: 'https://schema.org/NewCondition', availability: 'https://schema.org/InStock',
+          seller: { '@type': 'Organization', name: 'Skabba Deals', url: 'https://skabbadeals.com/' },
+          shippingDetails: { '@type': 'OfferShippingDetails', shippingDestination: { '@type': 'DefinedRegion', addressCountry: 'US' },
+            deliveryTime: { '@type': 'ShippingDeliveryTime', handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' }, transitTime: { '@type': 'QuantitativeValue', minValue: 6, maxValue: 12, unitCode: 'DAY' } } },
+          hasMerchantReturnPolicy: { '@type': 'MerchantReturnPolicy', returnPolicyCategory: 'https://schema.org/MerchantReturnFiniteReturnWindow', merchantReturnDays: 30, returnMethod: 'https://schema.org/ReturnByMail' } },
+      })}<\/script>`)
+      document.head.insertAdjacentHTML('beforeend', `<script type="application/ld+json">${JSON.stringify({
+        '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: [
+          { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://skabbadeals.com/' },
+          { '@type': 'ListItem', position: 2, name: p.category, item: 'https://skabbadeals.com/#shop' },
+          { '@type': 'ListItem', position: 3, name: p.name },
+        ],
       })}<\/script>`)
       const off = p.compareAt ? Math.round((1 - p.price / p.compareAt) * 100) : 0
       const t2 = offers.bundleTiers.find((t) => t.minQty === 2).pct

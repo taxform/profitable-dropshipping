@@ -1,4 +1,19 @@
 User-agent: *
+Allow: /
 Disallow: /admin
 Disallow: /order
+Disallow: /order.html
+Disallow: /funnel
+Disallow: /offer
+
+# AI assistants and AI search crawlers are welcome on public content.
+User-agent: GPTBot
+Allow: /
+
+User-agent: ClaudeBot
+Allow: /
+
+User-agent: PerplexityBot
+Allow: /
+
 Sitemap: https://skabbadeals.com/sitemap.xml
