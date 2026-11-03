@@ -21,7 +21,9 @@ function verify(payload: string, header: string, secret: string) {
 }
 
 export default async (req: Request, context: Context) => {
-  const secret = Netlify.env.get('STRIPE_WEBHOOK_SECRET')
+  // Accept the legacy lowercase name too: env vars are case-sensitive and the
+  // dashboard currently stores this secret as `stripe_webhook_secret`.
+  const secret = Netlify.env.get('STRIPE_WEBHOOK_SECRET') ?? Netlify.env.get('stripe_webhook_secret')
   if (!secret) return new Response('Webhook secret not configured', { status: 503 })
   const payload = await req.text()
   if (!verify(payload, req.headers.get('stripe-signature') ?? '', secret)) return new Response('Bad signature', { status: 400 })
