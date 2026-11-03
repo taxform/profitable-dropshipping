@@ -20,12 +20,24 @@
   <meta property="og:type" content="website">
   <meta property="og:title" content="Skabba Deals — Kitchen gadgets that earn their counter space">
   <meta property="og:description" content="Free tracked shipping over $49. Buy 2 save 10%, buy 3+ save 20%.">
+  <meta property="og:url" content="https://skabbadeals.com/">
+  <meta property="og:site_name" content="Skabba Deals">
   <meta property="og:image" content="https://skabbadeals.com/.netlify/images?url=/images/spice-grinder.png&w=1200&h=630&fit=cover">
+  <meta property="og:image:alt" content="One-Press Spice Grinder on a kitchen counter">
   <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Skabba Deals — Kitchen gadgets that earn their counter space">
+  <meta name="twitter:description" content="Free tracked shipping over $49. Buy 2 save 10%, buy 3+ save 20%.">
+  <meta name="twitter:image" content="https://skabbadeals.com/.netlify/images?url=/images/spice-grinder.png&w=1200&h=630&fit=cover">
+  <meta name="theme-color" content="#f3ede4">
   <link rel="icon" href="/favicon.svg" type="image/svg+xml">
-  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="dns-prefetch" href="https://www.googletagmanager.com">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,50&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="preload" as="image" href="/.netlify/images?url=/images/spice-grinder.png&w=900&fm=webp&q=80" fetchpriority="high">
   <link rel="stylesheet" href="/styles.css">
   <script type="application/ld+json">{"@context":"https://schema.org","@type":"OnlineStore","name":"Skabba Deals","url":"https://skabbadeals.com","logo":"https://skabbadeals.com/favicon.svg"}</script>
+  <script type="application/ld+json">{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"How long does delivery take?","acceptedAnswer":{"@type":"Answer","text":"Orders are processed within 1–2 business days and arrive in about 6–12 business days with tracking."}},{"@type":"Question","name":"How does the bundle discount work?","acceptedAnswer":{"@type":"Answer","text":"Add any 2 items for 10% off, or 3+ items for 20% off. It applies automatically."}},{"@type":"Question","name":"What if it arrives damaged or I don't like it?","acceptedAnswer":{"@type":"Answer","text":"Tell us within 30 days of delivery. Damaged or faulty items are replaced or refunded; change-of-mind returns are refunded once returned unused."}}]}</script>
 </head>
 <body>
   <main>
@@ -39,8 +51,8 @@
           <div class="hero__proof"><div><b>$49</b>free shipping from</div><div><b>20%</b>off 3 or more</div><div><b>30 days</b>to change your mind</div></div>
         </div>
         <div class="hero__art" aria-hidden="true">
-          <figure class="a"><img src="/.netlify/images?url=/images/spice-grinder.png&w=900&fm=webp&q=80" alt="" fetchpriority="high"></figure>
-          <figure class="b"><img src="/.netlify/images?url=/images/milk-frother.png&w=500&fm=webp&q=78" alt=""></figure>
+          <figure class="a"><img src="/.netlify/images?url=/images/spice-grinder.png&w=900&fm=webp&q=80" alt="" fetchpriority="high" width="700" height="735" decoding="async"></figure>
+          <figure class="b"><img src="/.netlify/images?url=/images/milk-frother.png&w=500&fm=webp&q=78" alt="" width="380" height="380" decoding="async" loading="lazy"></figure>
           <div class="tag">One-Press Spice Grinder<br><b>$34</b><s>$49.99</s></div>
         </div>
       </div>
@@ -89,7 +101,7 @@
     </div></section>
 
     <section class="section"><div class="wrap split">
-      <img src="/.netlify/images?url=/images/cabinet-light.png&w=900&fm=webp&q=78" alt="Motion-sensor LED light glowing under a wooden kitchen cabinet" loading="lazy">
+      <img src="/.netlify/images?url=/images/cabinet-light.png&w=900&fm=webp&q=78" alt="Motion-sensor LED light glowing under a wooden kitchen cabinet" loading="lazy" decoding="async" width="900" height="1125">
       <div>
         <div class="eyebrow">How we choose</div>
         <h2>If it lives in a drawer, it has to earn the space.</h2>
@@ -134,7 +146,7 @@
           const off = p.compareAt ? Math.round((1 - p.price / p.compareAt) * 100) : 0
           const big = cat === 'all' && i < 2
           return `<article class="card">
-            <a class="card__media" href="/products/${p.slug}"><img src="${img(p.image, big ? 900 : 640)}" alt="${esc(p.name)}" loading="lazy">
+            <a class="card__media" href="/products/${p.slug}"><img src="${img(p.image, big ? 900 : 640)}" alt="${esc(p.name)}" loading="lazy" decoding="async" width="640" height="640">
               ${off >= 5 ? `<span class="badge ${off >= 35 ? 'badge--clay' : ''}">Save ${off}%</span>` : ''}</a>
             <button class="quick-add" data-add="${p.slug}" data-open="false">+ Quick add</button>
             <div class="card__body"><div><h3><a href="/products/${p.slug}">${esc(p.name)}</a></h3><p>${esc(p.tagline)}</p></div>
