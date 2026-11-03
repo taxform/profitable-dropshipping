@@ -66,7 +66,43 @@
             <div class="row"><span>Shipping</span><span>${o.shipping ? money(o.shipping) : 'Free'}</span></div>
             <div class="row total"><span>Total</span><span>${money(o.total)}</span></div>
           </div>
-          <p style="margin-top:28px"><a class="btn btn--ghost" href="/#shop">Keep shopping</a></p>`
+          <p style="margin-top:28px"><a class="btn btn--ghost" href="/#shop">Keep shopping</a></p>
+          <div data-upsell style="margin-top:20px"></div>`
+        // Funnel buyers get a one-time add-on offer right on the thank-you page.
+        // It starts a separate express checkout (same Stripe flow), never an automatic charge.
+        const slot = main.querySelector('[data-upsell]')
+        if (slot && params.get('paid') && params.get('funnel') && (o.status === 'paid' || o.status === 'ordered' || o.status === 'shipped')) {
+          try {
+            const { products } = await fetch('/api/products').then((r) => r.json())
+            const bought = new Set(o.items.map((l) => l.name))
+            const extra = products.filter((p) => !bought.has(p.name)).sort((a, b) => a.price - b.price)[0]
+            if (extra) {
+              const esc2 = (s) => String(s).replace(/[<>&"]/g, '')
+              slot.innerHTML = `<div class="status-card" style="border:1px dashed var(--clay)">
+                <div class="eyebrow">One-time add-on · only on this page</div>
+                <h2 style="font-size:28px;margin:8px 0">Add the ${esc2(extra.name)} for ${money(extra.price)}</h2>
+                <p>${esc2(extra.tagline)} Ships with tracked delivery, covered by the same 30-day guarantee.</p>
+                <form data-upsell-form style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+                  <input class="field" type="email" name="email" required placeholder="you@example.com" aria-label="Email address" style="flex:1;min-width:220px" value="${esc2(localStorage.getItem('sd-email') || '')}">
+                  <button class="btn" type="submit">Add it · ${money(extra.price)}</button>
+                </form><div class="err" data-upsell-err></div>
+                <p class="muted" style="font-size:12px;margin:8px 0 0">Starts a separate express checkout — your original order is untouched.</p>
+              </div>`
+              slot.querySelector('[data-upsell-form]').addEventListener('submit', async (e) => {
+                e.preventDefault()
+                const email = e.target.email.value.trim().toLowerCase()
+                if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { slot.querySelector('[data-upsell-err]').textContent = 'Enter your email so we can send tracking.'; return }
+                try { localStorage.setItem('sd-email', email) } catch {}
+                const btn = e.target.querySelector('button')
+                btn.disabled = true; btn.textContent = 'Opening secure checkout…'
+                const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, items: [{ slug: extra.slug, qty: 1 }], funnel: params.get('funnel') }) })
+                const data = await res.json()
+                if (!res.ok) throw new Error(data.error || 'Checkout failed')
+                location.href = data.redirect
+              })
+            }
+          } catch {}
+        }
         const tries = Number(sessionStorage.getItem('sd-poll-' + o.id) || 0)
         if (o.status === 'pending_payment' && params.get('paid') && tries < 6) {
           sessionStorage.setItem('sd-poll-' + o.id, tries + 1)

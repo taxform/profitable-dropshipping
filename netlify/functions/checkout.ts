@@ -49,6 +49,8 @@ export default async (req: Request) => {
   }
 
   const origin = new URL(req.url).origin
+  const live = await catalog()
+  const funnel = typeof body.funnel === 'string' && live.has(body.funnel) ? body.funnel : null
   // Delivery window spans the slowest item in the cart.
   const windows = q.lines.map((l) => l.shipsIn.match(/\d+/g)?.map(Number) ?? [6, 12])
   const minDays = Math.min(...windows.map((w) => w[0] ?? 6))
@@ -58,7 +60,7 @@ export default async (req: Request) => {
     customer_email: email,
     client_reference_id: order.publicId,
     'metadata[order_id]': order.publicId,
-    success_url: `${origin}/order?id=${order.publicId}&paid=1`,
+    success_url: `${origin}/order?id=${order.publicId}&paid=1${funnel ? `&funnel=${funnel}` : ''}`,
     cancel_url: `${origin}/?checkout=cancelled`,
     'shipping_address_collection[allowed_countries][0]': 'US',
     'shipping_address_collection[allowed_countries][1]': 'CA',
