@@ -67,7 +67,7 @@ function chrome() {
     `<div class="announce" aria-label="Store offers"><div class="announce__track">${[...ANNOUNCE, ...ANNOUNCE].map((t) => `<span>${t}</span>`).join('')}</div></div>
     <header class="header"><div class="wrap">
       <a class="logo" href="/">Skabba <em>Deals</em></a>
-      <nav class="nav" aria-label="Main"><a href="/#shop">Shop all</a><a href="/#bundle">Bundle &amp; save</a><a href="/#faq">FAQ</a><a href="/shipping">Shipping</a></nav>
+      <nav class="nav" aria-label="Main"><a href="/#shop">Shop all</a><a href="/#bundle">Bundle &amp; save</a><a href="/guides/">Guides</a><a href="/#faq">FAQ</a><a href="/shipping">Shipping</a></nav>
       <button class="cart-btn" data-open-cart aria-label="Open cart">Cart <span class="cart-count" data-cart-count>0</span></button>
     </div></header>`,
   )
@@ -75,7 +75,7 @@ function chrome() {
     'beforeend',
     `<footer class="footer"><div class="wrap">
       <div><a class="logo" href="/">Skabba <em>Deals</em></a><p class="muted" style="max-width:26em">Small kitchen tools that earn their counter space. Picked, tested and shipped tracked to your door.</p></div>
-      <div><h4>Shop</h4><ul><li><a href="/#shop">All gadgets</a></li><li><a href="/#bundle">Bundle &amp; save</a></li><li><a href="/order">Track an order</a></li></ul></div>
+      <div><h4>Shop</h4><ul><li><a href="/#shop">All gadgets</a></li><li><a href="/#bundle">Bundle &amp; save</a></li><li><a href="/guides/">Kitchen guides</a></li><li><a href="/order">Track an order</a></li></ul></div>
       <div><h4>Help</h4><ul><li><a href="/shipping">Shipping</a></li><li><a href="/returns">Returns &amp; refunds</a></li><li><a href="/contact">Contact</a></li><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
       <div class="footer-signup"><div><h4>Get 10% off your first order</h4><p>One email a month with new gadgets and member prices.</p></div><div><form data-signup="footer"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn" type="submit">Get the code</button></form><div class="msg" role="status"></div></div></div>
       <div class="fine"><span>© ${new Date().getFullYear()} Skabba Deals · skabbadeals.com</span><span>Prices in USD · Payments secured by Stripe</span></div>

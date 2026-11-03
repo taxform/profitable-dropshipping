@@ -32,6 +32,37 @@ export default async (req: Request, context: any) => {
     `<link rel="canonical" href="${pageUrl}">`,
   )
 
+  const price = (product.price / 100).toFixed(2)
+  const productJsonLd = `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'Product',
+    name: product.name,
+    description: product.description,
+    image: `https://skabbadeals.com${product.image}`,
+    sku: product.slug,
+    brand: { '@type': 'Brand', name: 'Skabba Deals' },
+    offers: {
+      '@type': 'Offer',
+      url: pageUrl,
+      priceCurrency: 'USD',
+      price,
+      availability: 'https://schema.org/InStock',
+    },
+  })}<\/script>`
+  const breadcrumbJsonLd = `<script type="application/ld+json">${JSON.stringify({
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      { '@type': 'ListItem', position: 1, name: 'Home', item: 'https://skabbadeals.com/' },
+      { '@type': 'ListItem', position: 2, name: product.category, item: 'https://skabbadeals.com/#shop' },
+      { '@type': 'ListItem', position: 3, name: product.name },
+    ],
+  })}<\/script>`
+  // Server-rendered fallback so crawlers and no-JS clients see real content.
+  const noscript =
+    `<noscript><div class="wrap"><h1>${esc(product.name)}</h1>` +
+    `<p>${esc(product.tagline)} ${esc(product.description)}</p>` +
+    `<p>Price: $${price}. Ships in ${esc(product.shipsIn)}.</p></div></noscript>`
   const extra = [
     `<meta property="og:type" content="product">`,
     `<meta property="og:url" content="${pageUrl}">`,
@@ -41,9 +72,16 @@ export default async (req: Request, context: any) => {
     `<meta name="twitter:title" content="${esc(title)}">`,
     `<meta name="twitter:description" content="${esc(desc)}">`,
     `<meta name="twitter:image" content="${shareImg}">`,
+    productJsonLd,
+    breadcrumbJsonLd,
   ].join('\n  ')
   if (!html.includes('property="og:url"')) {
     html = html.replace('</head>', `  ${extra}\n</head>`)
+  } else if (!html.includes('"@type":"Product"')) {
+    html = html.replace('</head>', `  ${productJsonLd}\n  ${breadcrumbJsonLd}\n</head>`)
+  }
+  if (!html.includes('<noscript>')) {
+    html = html.replace('<main', `${noscript}<main`)
   }
 
   const headers = new Headers(res.headers)
