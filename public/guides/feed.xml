@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<rss version="2.0">
+  <channel>
+    <title>Skabba Deals — Kitchen Guides</title>
+    <link>https://skabbadeals.com/guides/</link>
+    <description>Practical kitchen guides: organization, seasoning, and air-fryer cooking.</description>
+    <language>en-us</language>
+    <item>
+      <title>7 Small-Kitchen Organization Ideas That Actually Stick</title>
+      <link>https://skabbadeals.com/guides/small-kitchen-organization-ideas</link>
+      <guid>https://skabbadeals.com/guides/small-kitchen-organization-ideas</guid>
+      <pubDate>Mon, 03 Nov 2026 00:00:00 GMT</pubDate>
+      <description>Renter-friendly ways to free counter and drawer space: magnetic knife storage, roll-up racks, motion lighting and reusable lids.</description>
+    </item>
+    <item>
+      <title>Why Fresh-Ground Pepper Tastes Better (and How to Get It Right)</title>
+      <link>https://skabbadeals.com/guides/fresh-pepper-spice-grinder-guide</link>
+      <guid>https://skabbadeals.com/guides/fresh-pepper-spice-grinder-guide</guid>
+      <pubDate>Mon, 03 Nov 2026 00:00:00 GMT</pubDate>
+      <description>Ceramic vs steel burrs, six grind settings explained, and how to season steak, salads and soups.</description>
+    </item>
+    <item>
+      <title>How to Use Less Oil in an Air Fryer (Without Dry Food)</title>
+      <link>https://skabbadeals.com/guides/air-fryer-oil-sprayer-guide</link>
+      <guid>https://skabbadeals.com/guides/air-fryer-oil-sprayer-guide</guid>
+      <pubDate>Mon, 03 Nov 2026 00:00:00 GMT</pubDate>
+      <description>Why a glass oil mister beats pouring and aerosol sprays: even coverage, air-fryer crisping, and how much oil you really need.</description>
+    </item>
+  </channel>
+</rss>
