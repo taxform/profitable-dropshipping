@@ -288,3 +288,8 @@ body.cart-open .drawer { transform: none; }
 .footer-signup .msg { font-size: 13px; color: var(--ink-2); min-height: 1.2em; }
 .footer-signup .code { font-weight: 700; }
 @media (min-width: 860px) { .footer-signup { grid-template-columns: 1fr 1.4fr; align-items: center; } }
+
+/* Google AdSense slots. Hidden until a manual <ins> unit is pasted in; Auto ads run site-wide regardless. */
+.ad-slot { display: none; margin: 28px auto; max-width: 728px; text-align: center; }
+.ad-slot:has(ins) { display: block; min-height: 90px; }
+.ad-slot ins { display: block; }
