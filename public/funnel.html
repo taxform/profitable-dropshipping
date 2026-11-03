@@ -1,0 +1,262 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <!-- Google tag (gtag.js) -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-43KLBMYB4T"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-43KLBMYB4T');
+  </script>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Bundle &amp; save — Skabba Deals</title>
+  <meta name="description" content="Bundle pricing on our most-loved kitchen gadget. Buy 2 save 10%, buy 3+ save 20%, free tracked shipping over $49, 30-day returns.">
+  <meta name="robots" content="noindex">
+  <meta name="theme-color" content="#f3ede4">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..800,50&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/styles.css">
+  <style>
+    .funnel-bar{background:var(--ink);color:#fff;text-align:center;font-size:13px;font-weight:600;padding:10px 16px;letter-spacing:.02em}
+    .funnel-bar b{color:#f2c185}
+    .funnel-hero{padding:clamp(28px,5vw,64px) 0}
+    .funnel-grid{display:grid;gap:clamp(24px,4vw,56px);grid-template-columns:1fr}
+    @media(min-width:960px){.funnel-grid{grid-template-columns:1.05fr .95fr;align-items:start}}
+    .funnel-media{position:relative}
+    .funnel-media img{width:100%;height:auto;border-radius:22px;background:var(--paper);display:block}
+    .funnel-media .badge{position:absolute;top:14px;left:14px;background:var(--clay);color:#fff;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:600}
+    .kit{display:grid;gap:10px;margin:20px 0}
+    .kit label{display:flex;align-items:center;justify-content:space-between;gap:12px;border:1px solid var(--line);border-radius:14px;padding:14px 16px;cursor:pointer}
+    .kit label:has(input:checked){border-color:var(--ink);background:var(--paper);box-shadow:inset 0 0 0 1px var(--ink)}
+    .kit input{accent-color:var(--clay)}
+    .kit .k-name{font-weight:600}
+    .kit .k-sub{display:block;font-size:13px;color:var(--sage);font-weight:600}
+    .kit .k-sub.muted{color:var(--ink-2);font-weight:400}
+    .kit .k-price{font-weight:600;white-space:nowrap;text-align:right}
+    .kit .k-price s{display:block;font-weight:400;color:var(--ink-2);font-size:13px}
+    .bump{display:flex;gap:12px;border:1px dashed var(--clay);border-radius:14px;padding:14px 16px;margin:0 0 20px;background:#fdf6ef;cursor:pointer}
+    .bump input{accent-color:var(--clay);margin-top:4px}
+    .bump img{width:56px;height:56px;border-radius:10px;object-fit:cover}
+    .bump .b-name{font-weight:600;font-size:14px}
+    .bump .b-sub{font-size:13px;color:var(--ink-2)}
+    .orderbox{background:var(--paper);border-radius:22px;padding:clamp(20px,3.4vw,32px);position:sticky;top:16px}
+    .orderbox .row{display:flex;justify-content:space-between;font-size:14px;padding:3px 0}
+    .orderbox .row.total{font-size:20px;font-weight:700;border-top:1px solid var(--line);margin-top:10px;padding-top:12px}
+    .orderbox .row.save{color:var(--sage);font-weight:600}
+    .secure{display:flex;gap:8px;align-items:center;justify-content:center;font-size:12px;color:var(--ink-2);margin-top:12px}
+    .steps3{display:grid;gap:14px;grid-template-columns:1fr;margin-top:18px}
+    @media(min-width:760px){.steps3{grid-template-columns:repeat(3,1fr)}}
+    .steps3 div{background:var(--paper);border-radius:16px;padding:18px}
+    .steps3 b{display:block;margin-bottom:6px}
+    .sticky-cta{display:none;position:fixed;left:0;right:0;bottom:0;z-index:40;background:rgba(251,248,243,.97);border-top:1px solid var(--line);padding:10px 14px calc(10px + env(safe-area-inset-bottom));align-items:center;gap:12px}
+    .sticky-cta .btn{flex:1}
+    @media(max-width:959px){.sticky-cta.on{display:flex}body{padding-bottom:76px}}
+  </style>
+</head>
+<body>
+  <div class="funnel-bar">Today's bundle prices refresh at midnight — <b>save up to 20%</b> when you bundle · <span data-countdown>--:--:--</span> left</div>
+  <header class="header"><div class="wrap">
+    <a class="logo" href="/">Skabba <em>Deals</em></a>
+    <span class="muted" style="font-size:13px">Secure checkout · 30-day returns</span>
+  </div></header>
+
+  <main class="wrap funnel-hero">
+    <div class="funnel-grid">
+      <div class="funnel-media">
+        <span class="badge" data-save-badge></span>
+        <img data-hero-img src="/images/veggie-chopper.png" alt="" fetchpriority="high" width="1000" height="1000">
+        <div class="steps3">
+          <div><b>1 · Pick your kit</b><span class="muted">One for you, or bundle up to 3 and save 20% automatically.</span></div>
+          <div><b>2 · Check out securely</b><span class="muted">Cards, Apple Pay and Google Pay through Stripe. We never see your card.</span></div>
+          <div><b>3 · Tracked to your door</b><span class="muted">Arrives in about 6–12 business days with tracking by email.</span></div>
+        </div>
+      </div>
+
+      <div>
+        <div class="eyebrow">Featured bundle deal</div>
+        <h1 data-name style="font-size:clamp(34px,4.6vw,54px);line-height:1.02;margin:8px 0"></h1>
+        <p class="lede" data-tagline></p>
+        <div class="pdp__price"><span data-price></span><s data-compare></s><span class="pill" data-off></span></div>
+        <ul class="ticks" data-bullets style="margin-top:16px"></ul>
+
+        <form data-funnel novalidate>
+          <div class="kit" role="radiogroup" aria-label="Choose your kit" data-kits></div>
+
+          <label class="bump" data-bump-wrap>
+            <input type="checkbox" data-bump>
+            <img data-bump-img src="" alt="" width="112" height="112">
+            <span><span class="b-name">Yes — add the <span data-bump-name></span></span><br>
+            <span class="b-sub" data-bump-sub></span></span>
+          </label>
+
+          <div class="orderbox">
+            <div class="row"><span>Subtotal</span><span data-t-subtotal></span></div>
+            <div class="row save" data-t-discount-row hidden><span data-t-offer></span><span data-t-discount></span></div>
+            <div class="row"><span>Shipping</span><span data-t-shipping></span></div>
+            <div class="row total"><span>Total today</span><span data-t-total></span></div>
+            <div style="display:flex;gap:8px;margin-top:14px">
+              <input class="field" name="code" placeholder="Discount code (optional)" aria-label="Discount code" autocomplete="off">
+              <button class="btn btn--ghost" type="button" data-apply-code>Apply</button>
+            </div>
+            <div style="margin-top:12px"><input class="field" type="email" name="email" placeholder="Email for order updates" autocomplete="email" required></div>
+            <div class="err" data-err style="margin-top:8px"></div>
+            <button class="btn btn--block" type="submit" data-cta style="margin-top:10px;font-size:18px">Claim my bundle</button>
+            <div class="secure"><svg width="12" height="14" viewBox="0 0 12 14"><rect x="1" y="6" width="10" height="7" rx="1.5" fill="none" stroke="currentColor"/><path d="M3.5 6V4a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor"/></svg><span>Secure Stripe checkout · 30-day money-back guarantee</span></div>
+          </div>
+        </form>
+        <p class="muted" style="font-size:13px;margin-top:12px">Want 10% off a future order too? <a href="#" data-code-link>Get a code by email</a> <span data-code-msg></span></p>
+      </div>
+    </div>
+
+    <section class="section" style="padding:56px 0 0"><div class="faq" style="display:grid;gap:24px;grid-template-columns:1fr">
+      <div><div class="eyebrow">Questions</div><h2>Good to know</h2></div>
+      <div>
+        <details><summary>How long does delivery take?</summary><p>Orders are processed within 1–2 business days and arrive in about 6–12 business days with tracking. You'll get the tracking number by email as soon as your parcel ships.</p></details>
+        <details><summary>How does the bundle discount work?</summary><p>Add any 2 items and every item is 10% off. Add 3 or more and it's 20% off — applied automatically, no code needed.</p></details>
+        <details><summary>What if I don't like it?</summary><p>Tell us within 30 days of delivery. Damaged or faulty items are replaced or refunded at no cost; change-of-mind returns are refunded once returned unused.</p></details>
+        <details><summary>Which payment methods do you take?</summary><p>All major cards, Apple Pay and Google Pay through Stripe's secure checkout. We never see or store your card details.</p></details>
+      </div>
+    </div></section>
+  </main>
+
+  <footer class="footer"><div class="wrap">
+    <div class="fine"><span>© <span data-year></span> Skabba Deals · skabbadeals.com</span><span>Prices in USD · Payments secured by Stripe</span></div>
+  </div></footer>
+
+  <div class="sticky-cta" data-sticky><div><b data-sticky-total></b><br><span class="muted" style="font-size:12px" data-sticky-sub></span></div><button class="btn" data-sticky-btn>Claim bundle</button></div>
+
+  <script type="module">
+    const $ = (s) => document.querySelector(s)
+    const money = (c) => '$' + (c / 100).toFixed(2).replace(/\.00$/, '')
+    const img = (src, w) => src.startsWith('http') ? src : `/.netlify/images?url=${encodeURIComponent(src)}&w=${w}&fm=webp&q=78`
+    const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
+    const track = (name, data = {}) => { try { gtag('event', name, data) } catch {} }
+
+    const params = new URLSearchParams(location.search)
+    const { products, offers } = await fetch('/api/products').then((r) => r.json())
+    const hero = products.find((p) => p.slug === params.get('p')) ?? products.find((p) => p.slug === 'vegetable-chopper') ?? products[0]
+    if (!hero) { document.querySelector('main').innerHTML = '<div class="empty"><h3>The shop is unavailable right now</h3><p>Please try again in a minute.</p><a class="btn" href="/">Back home</a></div>'; throw new Error('no catalog') }
+    const bump = [...products].filter((p) => p.slug !== hero.slug).sort((a, b) => a.price - b.price)[0] ?? null
+    track('funnel_view', { item: hero.slug })
+
+    document.title = `${hero.name} bundle deal — Skabba Deals`
+    $('[data-year]').textContent = new Date().getFullYear()
+    $('[data-name]').textContent = hero.name
+    $('[data-tagline]').textContent = hero.tagline
+    $('[data-hero-img]').src = img(hero.image, 1000)
+    $('[data-hero-img]').alt = hero.name
+    $('[data-price]').textContent = money(hero.price)
+    const off = hero.compareAt ? Math.round((1 - hero.price / hero.compareAt) * 100) : 0
+    if (hero.compareAt) $('[data-compare]').textContent = money(hero.compareAt)
+    else $('[data-compare]').remove()
+    if (off >= 5) { $('[data-off]').textContent = `Save ${off}%`; $('[data-save-badge]').textContent = `Save ${off}% today` }
+    else { $('[data-off]').remove(); $('[data-save-badge]').remove() }
+    $('[data-bullets]').innerHTML = hero.bullets.map((b) => `<li>${esc(b)}</li>`).join('')
+
+    // Kit picker: 1 / 2 / 3 of the hero product, priced live so bundle tiers always match checkout.
+    const t2 = offers.bundleTiers.find((t) => t.minQty === 2)?.pct ?? 10
+    const t3 = offers.bundleTiers.find((t) => t.minQty === 3)?.pct ?? 20
+    const kits = [
+      { qty: 1, label: 'Starter — 1 × ' + hero.name, sub: 'Try it out', pct: 0 },
+      { qty: 2, label: `Most popular — 2 × ${hero.name}`, sub: `Save ${t2}% automatically`, pct: t2 },
+      { qty: 3, label: `Best value — 3 × ${hero.name}`, sub: `Save ${t3}% automatically`, pct: t3 },
+    ]
+    let kitQty = params.get('kit') === '1' ? 1 : params.get('kit') === '2' ? 2 : 3
+    let code = ''
+    $('[data-kits]').innerHTML = kits.map((k) => `
+      <label><span style="display:flex;gap:10px;align-items:center"><input type="radio" name="kit" value="${k.qty}" ${k.qty === kitQty ? 'checked' : ''}>
+      <span class="k-name">${esc(k.label)}<span class="k-sub ${k.pct ? '' : 'muted'}">${esc(k.sub)}</span></span></span>
+      <span class="k-price" data-kit-price="${k.qty}"></span></label>`).join('')
+
+    if (!bump) $('[data-bump-wrap]').remove()
+    else {
+      $('[data-bump-name]').textContent = bump.name
+      $('[data-bump-img]').src = img(bump.image, 160)
+      $('[data-bump-img]').alt = ''
+      $('[data-bump-sub]').textContent = `${money(bump.price)} · pairs perfectly and boosts your bundle discount`
+    }
+
+    const items = () => {
+      const list = [{ slug: hero.slug, qty: kitQty }]
+      if (bump && $('[data-bump]').checked) list.push({ slug: bump.slug, qty: 1 })
+      return list
+    }
+    let seq = 0
+    async function refresh() {
+      const n = ++seq
+      const q = await fetch('/api/quote', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ items: items(), code }) }).then((r) => r.json())
+      if (n !== seq) return q
+      for (const k of kits) {
+        const el = document.querySelector(`[data-kit-price="${k.qty}"]`)
+        const each = Math.round(hero.price * (1 - k.pct / 100))
+        if (el) el.innerHTML = `${money(each * k.qty)}<s>${money(hero.price * k.qty)}</s>`
+      }
+      $('[data-t-subtotal]').textContent = money(q.listSubtotal)
+      $('[data-t-discount-row]').hidden = !q.discount
+      if (q.discount) { $('[data-t-offer]').textContent = q.appliedOffer; $('[data-t-discount]').textContent = '−' + money(q.discount) }
+      $('[data-t-shipping]').textContent = q.shipping ? money(q.shipping) : 'Free'
+      $('[data-t-total]').textContent = money(q.total)
+      $('[data-cta]').textContent = `Claim my bundle · ${money(q.total)}`
+      $('[data-sticky-total]').textContent = money(q.total)
+      $('[data-sticky-sub]').textContent = `${kitQty} × ${hero.name}${$('[data-bump]')?.checked && bump ? ' + ' + bump.name : ''}`
+      return q
+    }
+    document.querySelectorAll('[name=kit]').forEach((r) => r.addEventListener('change', () => { kitQty = Number(r.value); track('funnel_kit_select', { qty: kitQty }); refresh() }))
+    $('[data-bump]')?.addEventListener('change', (e) => { track('funnel_bump', { on: e.target.checked }); refresh() })
+    $('[data-apply-code]').addEventListener('click', () => { code = document.querySelector('[name=code]').value.trim().toUpperCase(); refresh() })
+    $('[data-code-link]').addEventListener('click', async (e) => {
+      e.preventDefault()
+      const email = document.querySelector('[name=email]').value.trim()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { $('[data-code-msg]').textContent = '— enter your email above first.'; return }
+      const res = await fetch('/api/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source: 'funnel-' + hero.slug }) })
+      const data = await res.json()
+      if (!res.ok) { $('[data-code-msg]').textContent = '— ' + data.error; return }
+      code = data.code
+      document.querySelector('[name=code]').value = code
+      $('[data-code-msg]').textContent = `— code ${data.code} applied where it saves you most.`
+      track('funnel_subscribe', {})
+      refresh()
+    })
+    await refresh()
+
+    // Evergreen daily countdown for today's bundle pricing.
+    const tick = () => {
+      const now = new Date(); const end = new Date(now); end.setHours(23, 59, 59, 999)
+      const s = Math.max(0, Math.floor((end - now) / 1000))
+      const h = String(Math.floor(s / 3600)).padStart(2, '0'), m = String(Math.floor((s % 3600) / 60)).padStart(2, '0'), ss = String(s % 60).padStart(2, '0')
+      document.querySelectorAll('[data-countdown]').forEach((el) => (el.textContent = `${h}:${m}:${ss}`))
+    }
+    tick(); setInterval(tick, 1000)
+
+    // Sticky mobile CTA appears once the order box scrolls out of view.
+    const sticky = $('[data-sticky]')
+    new IntersectionObserver(([e]) => sticky.classList.toggle('on', !e.isIntersecting)).observe(document.querySelector('.orderbox'))
+    $('[data-sticky-btn]').addEventListener('click', () => { document.querySelector('.orderbox').scrollIntoView({ behavior: 'smooth', block: 'center' }); document.querySelector('[name=email]').focus({ preventScroll: true }) })
+
+    document.querySelector('[data-funnel]').addEventListener('submit', async (e) => {
+      e.preventDefault()
+      const form = e.currentTarget
+      const email = form.email.value.trim().toLowerCase()
+      const err = $('[data-err]')
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { form.email.classList.add('invalid'); err.textContent = 'Enter your email so we can send tracking.'; form.email.focus(); return }
+      try { localStorage.setItem('sd-email', email) } catch {}
+      const btn = $('[data-cta]')
+      btn.disabled = true; btn.textContent = 'Opening secure checkout…'
+      track('funnel_checkout_click', { qty: kitQty, bump: !!$('[data-bump]')?.checked })
+      try {
+        const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, items: items(), code, funnel: hero.slug }) })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Checkout failed')
+        location.href = data.redirect
+      } catch (ex) { err.textContent = ex.message; btn.disabled = false; btn.textContent = 'Try again' }
+    })
+    if (params.get('checkout') === 'cancelled') {
+      $('[data-err]').textContent = 'Checkout was cancelled — nothing was charged. Your bundle is still reserved above.'
+    }
+  </script>
+</body>
+</html>
