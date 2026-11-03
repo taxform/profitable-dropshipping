@@ -1,0 +1,39 @@
+# Skabba Deals
+
+> Clever, tested kitchen gadgets at fair prices. Free tracked shipping on US orders
+> over $49. Buy any 2 items for 10% off, 3 or more for 20% off (applied
+> automatically). 30-day returns.
+
+Skabba Deals (https://skabbadeals.com/) is a small online store selling nine
+kitchen gadgets: prep tools, cook tools, brew tools, and organization tools.
+Orders are processed in 1–2 business days and arrive in about 6–12 business
+days with tracking. Contact: hello@skabbadeals.com.
+
+## Products
+
+- One-Press Spice Grinder ($34.00): USB-C rechargeable grinder with ceramic burrs and 6 coarseness settings. https://skabbadeals.com/products/cordless-spice-grinder
+- Pocket Milk Frother ($19.00): rechargeable stainless whisk wand with magnetic dock. https://skabbadeals.com/products/handheld-milk-frother
+- Acacia Magnetic Knife Strip ($32.00): 16-inch solid acacia bar holding 6–8 knives. https://skabbadeals.com/products/acacia-magnetic-knife-strip
+- 2-Second Meat Thermometer ($24.00): folding probe, ±0.5°C accuracy, backlit auto-rotating display. https://skabbadeals.com/products/instant-read-thermometer
+- Roll-Up Sink Rack ($27.00): silicone-wrapped steel rods, heat-safe to 200°C, dishwasher safe. https://skabbadeals.com/products/roll-up-drying-rack
+- 12-in-1 Veggie Chopper ($36.00): 8 stainless blade inserts with 1.2 L catch tray. https://skabbadeals.com/products/vegetable-chopper
+- Motion Under-Cabinet Light ($29.00): 30 cm warm-white LED bar with motion sensor, USB-C charging. https://skabbadeals.com/products/motion-cabinet-light
+- Stretch Lids, Set of 14 ($18.00): food-grade silicone lids in 6 sizes, freezer/microwave/dishwasher safe. https://skabbadeals.com/products/silicone-stretch-lids
+- Glass Oil Mister ($17.00): 200 ml borosilicate bottle with pump-action steel nozzle for air fryers. https://skabbadeals.com/products/glass-oil-mister
+
+## Guides
+
+- 7 Small-Kitchen Organization Ideas That Actually Stick: https://skabbadeals.com/guides/small-kitchen-organization-ideas
+- Why Fresh-Ground Pepper Tastes Better (and How to Get It Right): https://skabbadeals.com/guides/fresh-pepper-spice-grinder-guide
+- How to Use Less Oil in an Air Fryer (Without Dry Food): https://skabbadeals.com/guides/air-fryer-oil-sprayer-guide
+- All guides: https://skabbadeals.com/guides/
+- Guides RSS feed: https://skabbadeals.com/guides/feed.xml
+
+## Policies and help
+
+- Shipping info: https://skabbadeals.com/shipping
+- Returns: https://skabbadeals.com/returns
+- Contact: https://skabbadeals.com/contact
+- Privacy: https://skabbadeals.com/privacy
+- Terms: https://skabbadeals.com/terms
+- Sitemap: https://skabbadeals.com/sitemap.xml
