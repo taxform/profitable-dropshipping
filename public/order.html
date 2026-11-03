@@ -29,7 +29,7 @@
     <form class="lookup" data-lookup><input class="field" name="id" placeholder="SD-XXXXXXXX" required aria-label="Order number"><button class="btn">Look up</button></form>
   </main>
   <script type="module">
-    import { money, clearCart } from '/app.js'
+    import { money, clearCart, track } from '/app.js'
     const params = new URLSearchParams(location.search)
     const id = params.get('id')
     const main = document.querySelector('[data-order]')
@@ -44,6 +44,22 @@
       if (!res.ok) {
         main.insertAdjacentHTML('beforeend', `<p class="err">We couldn't find order ${id.replace(/[<>&]/g, '')}. Check the number and try again.</p>`)
       } else {
+        // GA4 / Google Ads purchase conversion. Fires once per order (guarded by sessionStorage).
+        try {
+          if (params.get('paid') && (o.status === 'paid' || o.status === 'ordered' || o.status === 'shipped' || o.status === 'delivered')) {
+            const key = 'sd-purchase-' + o.id
+            if (!sessionStorage.getItem(key)) {
+              sessionStorage.setItem(key, '1')
+              track('purchase', {
+                currency: 'USD',
+                transaction_id: o.id,
+                value: Number((o.total / 100).toFixed(2)),
+                shipping: Number(((o.shipping || 0) / 100).toFixed(2)),
+                items: (o.items || []).map((l) => ({ item_id: l.slug || l.name, item_name: l.name, quantity: l.qty, price: Number(((l.unit || 0) / 100).toFixed(2)) })),
+              })
+            }
+          }
+        } catch {}
         const flow = ['paid', 'ordered', 'shipped', 'delivered']
         const at = flow.indexOf(o.status)
         const headline = {

@@ -41,7 +41,7 @@
   </div></section>
 
   <script type="module">
-    import { getCatalog, money, img, addToCart } from '/app.js'
+    import { getCatalog, money, img, addToCart, track } from '/app.js'
     const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c])
     const slug = location.pathname.split('/').filter(Boolean).pop()
     const { products, offers } = await getCatalog()
@@ -62,6 +62,7 @@
       const url = `https://skabbadeals.com/products/${p.slug}`
       const desc = `${p.tagline} ${p.description}`.slice(0, 158)
       const shareImg = `https://skabbadeals.com/.netlify/images?url=${encodeURIComponent(p.image)}&w=1200&h=630&fit=cover`
+      try { track('view_item', { currency: 'USD', value: Number((p.price / 100).toFixed(2)), items: [{ item_id: p.slug, item_name: p.name, item_category: p.category, price: Number((p.price / 100).toFixed(2)), quantity: 1 }] }) } catch {}
       document.title = `${p.name} — Skabba Deals`
       document.querySelector('meta[name=description]').content = desc
       document.head.insertAdjacentHTML('beforeend', `<link rel="canonical" href="${url}">`)

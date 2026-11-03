@@ -1,4 +1,17 @@
 // Shared storefront: layout chrome, product data, cart drawer and checkout.
+// GA4 / Google Ads ecommerce events. Safe no-op when gtag is blocked.
+export const track = (name, params = {}) => {
+  try {
+    if (typeof window !== 'undefined' && typeof window.gtag === 'function') window.gtag('event', name, params)
+  } catch {}
+}
+const gtagItems = (lines) =>
+  (lines || []).map((l) => ({
+    item_id: l.slug,
+    item_name: l.name,
+    quantity: l.qty,
+    price: Number(((l.unit ?? l.price ?? 0) / 100).toFixed(2)),
+  }))
 export const money = (c) => '$' + (c / 100).toFixed(2).replace(/\.00$/, '')
 export const img = (src, w) => `/.netlify/images?url=${encodeURIComponent(src)}&w=${w}&fm=webp&q=78`
 const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c])
@@ -26,6 +39,16 @@ export function addToCart(slug, qty = 1, { open = true } = {}) {
   refresh()
   if (open) openCart()
   else toast('Added to cart')
+  getCatalog()
+    .then(({ products }) => {
+      const p = products.find((x) => x.slug === slug)
+      track('add_to_cart', {
+        currency: 'USD',
+        value: Number((((p?.price ?? 0) * qty) / 100).toFixed(2)),
+        items: [{ item_id: slug, item_name: p?.name ?? slug, quantity: qty, price: Number((((p?.price ?? 0) / 100).toFixed(2))) }],
+      })
+    })
+    .catch(() => track('add_to_cart', { currency: 'USD', items: [{ item_id: slug, quantity: qty }] }))
 }
 function setQty(slug, qty) {
   state.items = state.items.map((i) => (i.slug === slug ? { ...i, qty } : i)).filter((i) => i.qty > 0)
@@ -183,6 +206,10 @@ async function checkout(e) {
     return
   }
   localStorage.setItem('sd-email', email)
+  try {
+    const q = state.quote
+    if (q?.lines?.length) track('begin_checkout', { currency: 'USD', value: Number((q.total / 100).toFixed(2)), items: gtagItems(q.lines) })
+  } catch {}
   btn.disabled = true
   btn.textContent = 'Opening secure checkout…'
   try {
@@ -208,6 +235,7 @@ function wireSignup() {
       const res = await fetch('/api/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: form.email.value, source: form.dataset.signup }) })
       const data = await res.json()
       if (!res.ok) return (msg.textContent = data.error)
+      track('generate_lead', { method: 'newsletter' })
       msg.innerHTML = `You're in. Use <span class="code">${data.code}</span> for 10% off — we've added it to your cart.`
       applyCode(data.code)
       form.reset()

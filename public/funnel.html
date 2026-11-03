@@ -248,6 +248,11 @@
       btn.disabled = true; btn.textContent = 'Opening secure checkout…'
       track('funnel_checkout_click', { qty: kitQty, bump: !!$('[data-bump]')?.checked })
       try {
+        const heroPrice = Number((hero.price / 100).toFixed(2))
+        const list = items().map((i) => ({ item_id: i.slug, quantity: i.qty, price: heroPrice }))
+        track('begin_checkout', { currency: 'USD', items: list })
+      } catch {}
+      try {
         const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, items: items(), code, funnel: hero.slug }) })
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Checkout failed')
