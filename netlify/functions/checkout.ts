@@ -57,6 +57,9 @@ export default async (req: Request) => {
   const maxDays = Math.max(...windows.map((w) => w[1] ?? w[0] ?? 12))
   const form = new URLSearchParams({
     mode: 'payment',
+    currency: 'usd',
+    // Always charge in USD: stop Stripe from converting to the shopper's local currency (e.g. CAD).
+    'adaptive_pricing[enabled]': 'false',
     customer_email: email,
     client_reference_id: order.publicId,
     'metadata[order_id]': order.publicId,
