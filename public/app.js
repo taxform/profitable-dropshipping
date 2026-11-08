@@ -186,7 +186,7 @@ async function renderDrawer() {
       <input class="field" type="email" name="email" placeholder="Email for order updates" autocomplete="email" required value="${esc(localStorage.getItem('sd-email') || '')}">
       <div class="err" data-checkout-err></div>
       <button class="btn btn--block" type="submit">Checkout · ${money(q.total)}</button>
-      <div class="secure"><svg width="12" height="14" viewBox="0 0 12 14"><rect x="1" y="6" width="10" height="7" rx="1.5" fill="none" stroke="currentColor"/><path d="M3.5 6V4a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor"/></svg>Secure checkout · Charged in USD · 30-day returns</div>
+      <div class="secure"><svg width="12" height="14" viewBox="0 0 12 14"><rect x="1" y="6" width="10" height="7" rx="1.5" fill="none" stroke="currentColor"/><path d="M3.5 6V4a2.5 2.5 0 015 0v2" fill="none" stroke="currentColor"/></svg>Card, Apple Pay, Google Pay, Link &amp; pay-later options · Charged in USD · 30-day returns</div>
     </form>`
 
   body.querySelector('[data-apply-code]').onclick = () => applyCode(body.querySelector('[name=code]').value)
