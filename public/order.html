@@ -83,6 +83,10 @@
             <div class="row"><span>Shipping</span><span>${o.shipping ? money(o.shipping) : 'Free'}</span></div>
             <div class="row total"><span>Total</span><span>${money(o.total)}</span></div>
           </div>
+          ${params.get('paid') ? `<section class="thanks-note" style="margin-top:24px">
+            <p>We appreciate your business! If you have any questions, please email
+            <a href="mailto:hello@skabbadeals.com?subject=${encodeURIComponent('Order ' + o.id)}">hello@skabbadeals.com</a>.</p>
+          </section>` : ''}
           <p style="margin-top:28px"><a class="btn btn--ghost" href="/#shop">Keep shopping</a></p>
           <div data-upsell style="margin-top:20px"></div>`
         // Funnel buyers get a one-time add-on offer right on the thank-you page.
