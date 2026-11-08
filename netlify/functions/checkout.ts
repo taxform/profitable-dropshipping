@@ -8,6 +8,12 @@ import { eq } from 'drizzle-orm'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
+// Payment methods offered at checkout, in display order. `card` also covers Apple Pay and
+// Google Pay, which Stripe shows automatically on supported devices. Any method not yet
+// activated in the Stripe Dashboard (or not eligible for this cart) is dropped and the
+// session is retried, so an inactive method never blocks a sale.
+const PAYMENT_METHODS = ['card', 'link', 'paypal', 'cashapp', 'amazon_pay', 'klarna', 'afterpay_clearpay', 'affirm']
+
 // Stripe-hosted checkout styled to match the storefront (see public/styles.css).
 const BRANDING: Record<string, string> = {
   'branding_settings[display_name]': 'Skabba Deals',
@@ -91,15 +97,29 @@ export default async (req: Request) => {
       headers: { authorization: `Bearer ${stripeKey}`, 'content-type': 'application/x-www-form-urlencoded' },
       body,
     })
-  const branded = new URLSearchParams(form)
-  for (const [k, v] of Object.entries(BRANDING)) branded.set(k, v)
-  let res = await createSession(branded)
-  let session = await res.json()
-  // Branding is cosmetic: if Stripe rejects it (e.g. older API version), still take the payment.
-  if (!res.ok && res.status === 400 && String(session?.error?.param ?? '').startsWith('branding_settings')) {
-    console.warn('Stripe rejected branding settings, retrying without', session?.error?.message)
-    res = await createSession(form)
+  let methods: string[] | null = [...PAYMENT_METHODS]
+  let branding = true
+  let res: Response
+  let session: any
+  for (let attempt = 0; ; attempt++) {
+    const params = new URLSearchParams(form)
+    if (branding) for (const [k, v] of Object.entries(BRANDING)) params.set(k, v)
+    // Without an explicit list Stripe falls back to the methods enabled in the Dashboard.
+    methods?.forEach((m, i) => params.set(`payment_method_types[${i}]`, m))
+    res = await createSession(params)
     session = await res.json()
+    if (res.ok || res.status !== 400 || attempt >= PAYMENT_METHODS.length + 1) break
+    const param = String(session?.error?.param ?? '')
+    const message = String(session?.error?.message ?? '')
+    if (branding && param.startsWith('branding_settings')) {
+      // Branding is cosmetic: if Stripe rejects it (e.g. older API version), still take the payment.
+      console.warn('Stripe rejected branding settings, retrying without', message)
+      branding = false
+    } else if (methods && (param.startsWith('payment_method_types') || /payment method/i.test(message))) {
+      const rejected: string | undefined = methods.find((m: string) => m !== 'card' && new RegExp('["\'`]' + m + '["\'`]').test(message)) ?? methods[Number(param.match(/\[(\d+)\]/)?.[1])]
+      console.warn('Stripe rejected payment method', rejected ?? '(unknown)', message)
+      methods = rejected && rejected !== 'card' ? methods.filter((m) => m !== rejected) : null
+    } else break
   }
   if (!res.ok) {
     console.error('Stripe session error', session?.error?.message)
