@@ -21,14 +21,17 @@ function verify(payload: string, header: string, secret: string) {
 }
 
 export default async (req: Request, context: Context) => {
-  // Accept the legacy lowercase name too: env vars are case-sensitive and the
-  // dashboard currently stores this secret as `stripe_webhook_secret`.
   const secret = Netlify.env.get('STRIPE_WEBHOOK_SECRET') ?? Netlify.env.get('stripe_webhook_secret')
   if (!secret) return new Response('Webhook secret not configured', { status: 503 })
   const payload = await req.text()
   if (!verify(payload, req.headers.get('stripe-signature') ?? '', secret)) return new Response('Bad signature', { status: 400 })
 
-  const event = JSON.parse(payload)
+  let event: any
+  try {
+    event = JSON.parse(payload)
+  } catch {
+    return new Response('Invalid event', { status: 400 })
+  }
   const session = event.data?.object
   const orderId = session?.metadata?.order_id ?? session?.client_reference_id
 
@@ -47,7 +50,9 @@ export default async (req: Request, context: Context) => {
         })
         .where(and(eq(orders.publicId, orderId), eq(orders.status, 'pending_payment')))
         .returning()
-      // Place the order with CJ after acknowledging Stripe; failures are noted on the order and retried by cj-sync.
+
+      // Create the CJ order automatically after payment. CJ's payType is fixed to create-only,
+      // so supplier payment remains a manual action in the CJ dashboard.
       if (paid && cjEnabled()) context.waitUntil(forwardOrder(paid.publicId).catch((e) => console.error('CJ forward', paid.publicId, e.message)))
     }
   } else if (orderId && event.type === 'checkout.session.expired') {

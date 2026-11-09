@@ -31,7 +31,6 @@ export default async (req: Request) => {
 
   const all = await db.select().from(orders).orderBy(desc(orders.createdAt)).limit(500)
   const [{ value: subscriberCount }] = await db.select({ value: count() }).from(subscribers)
-
   const earning = all.filter((o) => REVENUE_STATUSES.has(o.status))
   const sum = (k: 'total' | 'cogs' | 'fees' | 'profit') => earning.reduce((s, o) => s + o[k], 0)
   const units: Record<string, { name: string; units: number; revenue: number; profit: number }> = {}
@@ -55,9 +54,7 @@ export default async (req: Request) => {
       abandoned: all.filter((o) => o.status === 'pending_payment').length,
       subscribers: subscriberCount,
     },
-    topProducts: Object.entries(units)
-      .map(([slug, u]) => ({ slug, ...u }))
-      .sort((a, b) => b.profit - a.profit),
+    topProducts: Object.entries(units).map(([slug, u]) => ({ slug, ...u })).sort((a, b) => b.profit - a.profit),
     unitEconomics: [...(await catalog()).values()].map((p) => {
       const fee = Math.round((p.price * STRIPE_FEE.pct) / 100 + STRIPE_FEE.fixed)
       return { slug: p.slug, name: p.name, price: p.price, cost: p.cost, fee, margin: p.price - p.cost - fee, sku: p.supplier.sku, supplier: p.supplier.name, linked: !!p.linked }
@@ -66,7 +63,8 @@ export default async (req: Request) => {
     statuses: STATUSES,
     paymentsEnabled: !!Netlify.env.get('STRIPE_SECRET_KEY'),
     cjEnabled: cjEnabled(),
-    cjAutoPay: Netlify.env.get('CJ_AUTO_PAY') === 'true',
+    // Supplier payment is intentionally never automated; CJ_AUTO_PAY is ignored by sourcing.
+    cjAutoPay: false,
     products: [...(await catalog()).values()].map((p) => ({ slug: p.slug, name: p.name, image: p.image, cjQuery: p.cjQuery, compareAt: p.compareAt })),
     sources: await sources(),
   })

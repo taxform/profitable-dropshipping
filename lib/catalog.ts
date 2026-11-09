@@ -24,7 +24,7 @@ export const PRODUCTS: Product[] = [
     name: 'One-Press Spice Grinder',
     tagline: 'Fresh pepper with one thumb.',
     description:
-      'A USB-C rechargeable grinder with ceramic burrs and a dial for six coarseness settings. One charge covers roughly 200 seasoning sessions, and the base cap catches stray grounds so the counter stays clean.',
+      'A USB-C rechargeable grinder with ceramic burrs and a dial for six coarseness settings. One charge covers roughly 200 seasoning sessions, and the base cap catches stray grounds so the counter stays tidy.',
     bullets: ['Ceramic burrs that never rust', '6 coarseness settings', 'USB-C, ~200 uses per charge', 'Works with pepper, salt and dried spices'],
     category: 'Cook',
     price: 3400,
@@ -56,7 +56,7 @@ export const PRODUCTS: Product[] = [
     name: 'Acacia Magnetic Knife Strip',
     tagline: 'Free a drawer. Keep the edge.',
     description:
-      'A 16-inch solid acacia bar with rare-earth magnets set under the wood, so blades touch timber instead of metal. It holds 6–8 knives and mounts with the included screws or a no-drill adhesive kit.',
+      'A 16-inch solid acacia bar with rare-earth magnets set under the wood, so blades touch timber instead of metal. It holds 6–8 knives and mounts with the included screws or a no-drill adhesive option.',
     bullets: ['Solid acacia, 16 in / 40 cm', 'Hidden rare-earth magnets', 'Holds 6–8 knives', 'Screw or no-drill mounting'],
     category: 'Organize',
     price: 3200,
@@ -169,6 +169,5 @@ export const bySlug = new Map(PRODUCTS.map((p) => [p.slug, p]))
 
 export function publicProduct(p: Product) {
   const { cost, supplier, cjQuery, linked, ...rest } = p
-  // Only show a strike-through price when it is genuinely higher than ours.
   return { ...rest, compareAt: rest.compareAt > rest.price ? rest.compareAt : null }
 }

@@ -8,13 +8,6 @@ import { eq } from 'drizzle-orm'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-// Payment methods (card, Apple Pay/Google Pay, Link, PayPal, Cash App, Amazon Pay, Klarna,
-// Afterpay, Affirm, ...) are managed in the Stripe Dashboard under Settings → Payment methods.
-// Stripe no longer accepts `payment_method_types` on Checkout Sessions for this account and
-// rejects the whole request if it is sent, so it is intentionally omitted: Stripe shows every
-// enabled method that is eligible for the cart, currency and shopper.
-
-// Stripe-hosted checkout styled to match the storefront (see public/styles.css).
 const BRANDING: Record<string, string> = {
   'branding_settings[display_name]': 'Skabba Deals',
   'branding_settings[font_family]': 'inter',
@@ -28,10 +21,29 @@ export default async (req: Request) => {
   const email = String(body.email ?? '').trim().toLowerCase()
   if (!EMAIL.test(email)) return Response.json({ error: 'Enter a valid email address.' }, { status: 400 })
 
-  const q = quote(Array.isArray(body.items) ? body.items : [], body.code, await catalog())
-  if (q.lines.length === 0) return Response.json({ error: 'Your cart is empty.' }, { status: 400 })
+  const products = await catalog()
+  const items = Array.isArray(body.items) ? body.items : []
+  if (!items.length || items.length > 30) return Response.json({ error: 'Your cart is empty or too large.' }, { status: 400 })
+  for (const item of items) {
+    const product = products.get(String(item?.slug ?? ''))
+    const qty = Math.floor(Number(item?.qty) || 0)
+    if (!product || qty < 1 || qty > 20) return Response.json({ error: 'Your cart contains an invalid product or quantity. Please refresh and try again.' }, { status: 400 })
+    if (!product.linked || !product.supplier.vid) {
+      return Response.json({ error: `${product.name} is not connected to an available CJ product yet. Please try again later.` }, { status: 409 })
+    }
+  }
 
-  const publicId = 'SD-' + randomBytes(4).toString('hex').toUpperCase()
+  const q = quote(items, body.code, products)
+  if (q.lines.length === 0 || q.lines.length !== items.length) {
+    return Response.json({ error: 'Your cart contains an unavailable product. Please refresh and try again.' }, { status: 400 })
+  }
+  // Prevent a manually locked price or promotion from charging less than the recorded costs/fees.
+  if (q.profit <= 0) return Response.json({ error: 'This cart is temporarily unavailable at the current price. Please contact support.' }, { status: 409 })
+
+  const stripeKey = Netlify.env.get('STRIPE_SECRET_KEY')
+  if (!stripeKey) return Response.json({ error: 'Online checkout is temporarily unavailable.' }, { status: 503 })
+
+  const publicId = 'SD-' + randomBytes(8).toString('hex').toUpperCase()
   const [order] = await db
     .insert(orders)
     .values({
@@ -49,25 +61,16 @@ export default async (req: Request) => {
     })
     .returning()
 
-  const stripeKey = Netlify.env.get('STRIPE_SECRET_KEY')
-  if (!stripeKey) {
-    return Response.json({ orderId: order.publicId, paymentsEnabled: false, redirect: `/order?id=${order.publicId}` })
-  }
-
   const origin = new URL(req.url).origin
-  const live = await catalog()
-  const funnel = typeof body.funnel === 'string' && live.has(body.funnel) ? body.funnel : null
-  // Delivery window spans the slowest item in the cart.
+  const funnel = typeof body.funnel === 'string' && products.has(body.funnel) ? body.funnel : null
   const windows = q.lines.map((l) => l.shipsIn.match(/\d+/g)?.map(Number) ?? [6, 12])
   const minDays = Math.min(...windows.map((w) => w[0] ?? 6))
   const maxDays = Math.max(...windows.map((w) => w[1] ?? w[0] ?? 12))
   const form = new URLSearchParams({
     mode: 'payment',
     currency: 'usd',
-    // Always charge in USD: stop Stripe from converting to the shopper's local currency (e.g. CAD).
     'adaptive_pricing[enabled]': 'false',
     customer_email: email,
-    // Create a Stripe customer for every purchase so shoppers can open the customer portal later.
     customer_creation: 'always',
     client_reference_id: order.publicId,
     'metadata[order_id]': order.publicId,
@@ -93,29 +96,29 @@ export default async (req: Request) => {
     form.set(`line_items[${i}][price_data][product_data][images][0]`, l.image.startsWith('http') ? l.image : `${origin}${l.image}`)
   })
 
-  const createSession = (body: URLSearchParams) =>
+  const createSession = (params: URLSearchParams) =>
     fetch('https://api.stripe.com/v1/checkout/sessions', {
       method: 'POST',
       headers: { authorization: `Bearer ${stripeKey}`, 'content-type': 'application/x-www-form-urlencoded' },
-      body,
+      body: params,
     })
   let branding = true
   let res: Response
   let session: any
   for (;;) {
     const params = new URLSearchParams(form)
-    if (branding) for (const [k, v] of Object.entries(BRANDING)) params.set(k, v)
+    if (branding) for (const [key, value] of Object.entries(BRANDING)) params.set(key, value)
     res = await createSession(params)
-    session = await res.json()
+    session = await res.json().catch(() => ({}))
     if (res.ok || res.status !== 400) break
     const param = String(session?.error?.param ?? '')
     if (branding && param.startsWith('branding_settings')) {
-      // Branding is cosmetic: if Stripe rejects it (e.g. older API version), still take the payment.
-      console.warn('Stripe rejected branding settings, retrying without', session?.error?.message)
+      console.warn('Stripe rejected branding settings; retrying without them.')
       branding = false
     } else break
   }
   if (!res.ok) {
+    await db.update(orders).set({ status: 'cancelled', notes: 'Stripe checkout session creation failed.', updatedAt: new Date() }).where(eq(orders.id, order.id))
     console.error('Stripe session error', res.status, session?.error?.param ?? '', session?.error?.message)
     return Response.json({ error: 'Checkout is temporarily unavailable. Please try again in a minute.' }, { status: 502 })
   }

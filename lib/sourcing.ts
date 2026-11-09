@@ -35,11 +35,11 @@ export async function catalog(): Promise<Map<string, Product>> {
   try {
     rows = await db.select().from(productSources)
   } catch (e: any) {
-    // Never take the storefront down over sourcing data; sell at catalog prices instead.
+    // Never take the storefront down over sourcing data; checkout rejects unlinked products.
     console.error('Loading CJ product links failed', e.message)
   }
-  const sources = new Map(rows.map((s) => [s.slug, s]))
-  const map = new Map(PRODUCTS.map((p) => [p.slug, sources.has(p.slug) ? applySource(p, sources.get(p.slug)!) : p]))
+  const sourceMap = new Map(rows.map((s) => [s.slug, s]))
+  const map = new Map(PRODUCTS.map((p) => [p.slug, sourceMap.has(p.slug) ? applySource(p, sourceMap.get(p.slug)!) : p]))
   cache = { at: Date.now(), map }
   return map
 }
@@ -119,7 +119,7 @@ const COUNTRY_NAMES: Record<string, string> = { US: 'United States', CA: 'Canada
 
 type Address = { line1?: string; line2?: string | null; city?: string; state?: string; postal_code?: string; country?: string; phone?: string | null }
 
-// Places a paid order with CJ. CJ rejects duplicate order numbers, so retries are safe.
+// Creates a paid order with CJ. Supplier payment is always left for manual payment in CJ.
 export async function forwardOrder(publicId: string) {
   const [o] = await db.select().from(orders).where(eq(orders.publicId, publicId)).limit(1)
   if (!o) throw new Error('Order not found')
@@ -148,13 +148,14 @@ export async function forwardOrder(publicId: string) {
       email: o.email,
       logisticName: ship.logisticName,
       fromCountryCode: 'CN',
-      // 2 = pay from CJ wallet balance automatically, 3 = create only and pay in the CJ dashboard.
-      payType: process.env.CJ_AUTO_PAY === 'true' ? 2 : 3,
+      // CJ payType 3 creates the supplier order without paying from the CJ wallet.
+      // Do not make this configurable: supplier payment must remain manual.
+      payType: 3,
       products: products.map(({ vid, quantity }) => ({ vid, quantity })),
     })
     const [row] = await db
       .update(orders)
-      .set({ status: 'ordered', supplierOrderId: String(res.orderId), notes: `Sent to CJ via ${ship.logisticName}`, updatedAt: new Date() })
+      .set({ status: 'ordered', supplierOrderId: String(res.orderId), notes: `Created in CJ via ${ship.logisticName}; supplier payment is due in CJ.`, updatedAt: new Date() })
       .where(and(eq(orders.id, o.id), eq(orders.status, 'paid')))
       .returning()
     return row
