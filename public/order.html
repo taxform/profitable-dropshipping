@@ -35,6 +35,7 @@
     <h1>Track an order</h1>
     <p>Enter the order number from your confirmation email.</p>
     <form class="lookup" data-lookup><input class="field" name="id" placeholder="SD-XXXXXXXX" required aria-label="Order number"><button class="btn">Look up</button></form>
+    <p class="muted" style="font-size:14px">Need a receipt or want to update a saved card? <a href="https://billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00" rel="noopener">Sign in to the billing portal</a> with your checkout email.</p>
   </main>
   <script type="module">
     import { money, clearCart, track } from '/app.js'
@@ -94,8 +95,37 @@
             <p>We appreciate your business! If you have any questions, please email
             <a href="mailto:hello@skabbadeals.com?subject=${encodeURIComponent('Order ' + o.id)}">hello@skabbadeals.com</a>.</p>
           </section>` : ''}
+          ${['paid', 'ordered', 'shipped', 'delivered', 'refunded'].includes(o.status) ? `<details class="status-card" data-portal style="margin-top:20px">
+            <summary><b>Receipts, billing details &amp; payment methods</b></summary>
+            <p class="muted" style="margin:10px 0">Open your secure Stripe billing portal. Confirm the email you used at checkout.</p>
+            <form data-portal-form style="display:flex;gap:8px;flex-wrap:wrap">
+              <input class="field" type="email" name="email" required placeholder="you@example.com" aria-label="Checkout email" style="flex:1;min-width:220px">
+              <button class="btn" type="submit">Manage billing</button>
+            </form><div class="err" data-portal-err></div>
+            <p class="muted" style="font-size:13px;margin:8px 0 0">Or <a href="https://billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00" rel="noopener">sign in with a one-time email link</a> to see all your purchases.</p>
+          </details>` : ''}
           <p style="margin-top:28px"><a class="btn btn--ghost" href="/#shop">Keep shopping</a></p>
           <div data-upsell style="margin-top:20px"></div>`
+        const portalForm = main.querySelector('[data-portal-form]')
+        if (portalForm) {
+          try { portalForm.email.value = localStorage.getItem('sd-email') || '' } catch {}
+          portalForm.addEventListener('submit', async (e) => {
+            e.preventDefault()
+            const err = main.querySelector('[data-portal-err]')
+            const btn = portalForm.querySelector('button')
+            err.textContent = ''
+            btn.disabled = true; btn.textContent = 'Opening…'
+            try {
+              const res = await fetch('/api/portal', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: o.id, email: portalForm.email.value.trim().toLowerCase() }) })
+              const data = await res.json()
+              if (!res.ok) throw new Error(data.error || 'Could not open the billing portal.')
+              location.href = data.url
+            } catch (x) {
+              err.textContent = x.message
+              btn.disabled = false; btn.textContent = 'Manage billing'
+            }
+          })
+        }
         // Funnel buyers get a one-time add-on offer right on the thank-you page.
         // It starts a separate express checkout (same Stripe flow), never an automatic charge.
         const slot = main.querySelector('[data-upsell]')

@@ -67,6 +67,8 @@ export default async (req: Request) => {
     // Always charge in USD: stop Stripe from converting to the shopper's local currency (e.g. CAD).
     'adaptive_pricing[enabled]': 'false',
     customer_email: email,
+    // Create a Stripe customer for every purchase so shoppers can open the customer portal later.
+    customer_creation: 'always',
     client_reference_id: order.publicId,
     'metadata[order_id]': order.publicId,
     success_url: `${origin}/order?id=${order.publicId}&paid=1${funnel ? `&funnel=${funnel}` : ''}`,

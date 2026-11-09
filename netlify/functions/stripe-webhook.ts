@@ -41,6 +41,7 @@ export default async (req: Request, context: Context) => {
           status: 'paid',
           paidAt: new Date(),
           updatedAt: new Date(),
+          stripeCustomerId: typeof session.customer === 'string' ? session.customer : (session.customer?.id ?? null),
           name: details?.name ?? session.customer_details?.name ?? null,
           shippingAddress: details?.address ? { ...details.address, phone: session.customer_details?.phone ?? null } : null,
         })
