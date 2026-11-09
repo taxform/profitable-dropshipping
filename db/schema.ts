@@ -20,6 +20,7 @@ export const orders = pgTable('orders', {
   // pending_payment → paid → ordered (placed with supplier) → shipped → delivered; or cancelled / refunded
   status: text().notNull().default('pending_payment'),
   stripeSessionId: text('stripe_session_id'),
+  stripeCustomerId: text('stripe_customer_id'),
   supplierOrderId: text('supplier_order_id'),
   trackingNumber: text('tracking_number'),
   notes: text(),
