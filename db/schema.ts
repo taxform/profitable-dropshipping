@@ -50,6 +50,7 @@ export const productSources = pgTable('product_sources', {
   shippingCost: integer('shipping_cost').notNull(),
   logisticName: text('logistic_name'),
   shippingDays: text('shipping_days'),
+  inventory: integer().notNull().default(0),
   price: integer().notNull(),
   priceLocked: boolean('price_locked').notNull().default(false),
   useCjImage: boolean('use_cj_image').notNull().default(true),
