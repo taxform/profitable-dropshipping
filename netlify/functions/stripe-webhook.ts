@@ -4,7 +4,6 @@ import { and, eq } from 'drizzle-orm'
 import { db } from '../../db/index.js'
 import { orders } from '../../db/schema.js'
 import { cjEnabled } from '../../lib/cj.js'
-import { forwardOrder } from '../../lib/sourcing.js'
 
 function verify(payload: string, header: string, secret: string) {
   const parts = Object.fromEntries(header.split(',').map((kv) => kv.split('=') as [string, string]))
@@ -44,11 +43,16 @@ export default async (req: Request, context: Context) => {
           stripeCustomerId: typeof session.customer === 'string' ? session.customer : (session.customer?.id ?? null),
           name: details?.name ?? session.customer_details?.name ?? null,
           shippingAddress: details?.address ? { ...details.address, phone: session.customer_details?.phone ?? null } : null,
+          notes: 'Payment received — awaiting manual supplier approval before order is sent to CJ.',
         })
         .where(and(eq(orders.publicId, orderId), eq(orders.status, 'pending_payment')))
         .returning()
-      // Place the order with CJ after acknowledging Stripe; failures are noted on the order and retried by cj-sync.
-      if (paid && cjEnabled()) context.waitUntil(forwardOrder(paid.publicId).catch((e) => console.error('CJ forward', paid.publicId, e.message)))
+
+      // Manual supplier approval is required before any CJ order is created.
+      // The admin dashboard sends the supplier order intentionally after a human review.
+      if (paid && cjEnabled()) {
+        context.waitUntil(Promise.resolve())
+      }
     }
   } else if (orderId && event.type === 'checkout.session.expired') {
     await db
