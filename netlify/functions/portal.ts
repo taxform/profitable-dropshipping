@@ -36,7 +36,7 @@ export default async (req: Request) => {
   }
   if (!customer) {
     return Response.json(
-      { error: 'This order was paid as a guest, so there is no billing account to open. Email hello@skabbadeals.com for a receipt.' },
+      { error: 'This order was paid as a guest, so there is no billing account to open. Try signing in at billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00 with your checkout email, or email hello@skabbadeals.com for a receipt.' },
       { status: 409 },
     )
   }

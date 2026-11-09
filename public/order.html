@@ -35,6 +35,7 @@
     <h1>Track an order</h1>
     <p>Enter the order number from your confirmation email.</p>
     <form class="lookup" data-lookup><input class="field" name="id" placeholder="SD-XXXXXXXX" required aria-label="Order number"><button class="btn">Look up</button></form>
+    <p class="muted" style="font-size:14px">Need a receipt or want to update a saved card? <a href="https://billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00" rel="noopener">Sign in to the billing portal</a> with your checkout email.</p>
   </main>
   <script type="module">
     import { money, clearCart, track } from '/app.js'
@@ -101,6 +102,7 @@
               <input class="field" type="email" name="email" required placeholder="you@example.com" aria-label="Checkout email" style="flex:1;min-width:220px">
               <button class="btn" type="submit">Manage billing</button>
             </form><div class="err" data-portal-err></div>
+            <p class="muted" style="font-size:13px;margin:8px 0 0">Or <a href="https://billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00" rel="noopener">sign in with a one-time email link</a> to see all your purchases.</p>
           </details>` : ''}
           <p style="margin-top:28px"><a class="btn btn--ghost" href="/#shop">Keep shopping</a></p>
           <div data-upsell style="margin-top:20px"></div>`
