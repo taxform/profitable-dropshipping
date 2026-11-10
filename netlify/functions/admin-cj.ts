@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions'
 import { authorized } from '../../lib/auth.js'
 import { getProduct, searchProducts } from '../../lib/cj.js'
-import { autoMatch, forwardOrder, linkProduct, refreshProduct, syncTracking, unlinkProduct, updateSource } from '../../lib/sourcing.js'
+import { syncInventory, autoMatch, forwardOrder, linkProduct, refreshProduct, syncTracking, unlinkProduct, updateSource } from '../../lib/sourcing.js'
 
 // Dashboard actions against CJdropshipping. One CJ product per request keeps each call well inside the timeout.
 export default async (req: Request) => {
@@ -28,6 +28,8 @@ export default async (req: Request) => {
         return Response.json({ ok: true })
       case 'forward':
         return Response.json(await forwardOrder(String(b.id)))
+      case 'inventory':
+        return Response.json(await syncInventory())
       case 'tracking':
         return Response.json(await syncTracking(15))
       default:

@@ -115,6 +115,7 @@
         <h2>Products &amp; CJ sourcing</h2>
         ${d.cjEnabled ? '' : `<div class="warn"><b>CJ isn't connected yet.</b> In CJdropshipping go to <i>My CJ → Authorization → API</i>, generate an API key, and save it as the <code>CJ_API_KEY</code> environment variable on this site. Then come back and press <i>Auto-match</i>.</div>`}
         <div class="tabs">
+          <button class="btn btn--ghost sm" data-inventory>Sync inventory</button>
           <button class="btn sm" data-automatch-all ${d.cjEnabled ? '' : 'disabled'}>Auto-match unlinked products</button>
           <button class="btn btn--ghost sm" data-refresh-all ${d.cjEnabled && d.sources.length ? '' : 'disabled'}>Refresh costs from CJ</button>
           <span class="muted" data-cj-status>${d.sources.length}/${d.products.length} products linked to CJ · prices auto-set to 3× landed cost (min. $15 profit) unless you set one</span>
@@ -128,7 +129,7 @@
           <div class="cj-results" style="margin-bottom:0">${searchHtml}</div></div>` : ''}
 
         <h2>Orders</h2>
-        ${d.cjEnabled ? `<div class="tabs"><button class="btn btn--ghost sm" data-tracking>Pull tracking from CJ</button><span class="muted">${d.cjAutoPay ? 'Paid orders are sent to CJ and paid from your CJ balance automatically.' : 'Paid orders are sent to CJ automatically — pay for them in your CJ dashboard (or set CJ_AUTO_PAY=true to pay from your CJ balance).'} Tracking syncs every 2 hours.</span></div>` : ''}
+        ${d.cjEnabled ? `<div class="tabs"><button class="btn btn--ghost sm" data-tracking>Pull tracking from CJ</button><span class="muted">Paid orders require your approval using Send to CJ. Supplier payment remains manual in CJ. Tracking syncs every 2 hours.</span></div>` : ''}
         <div class="tabs">${['paid', 'ordered', 'shipped', 'pending_payment', 'all'].map((f) => `<button class="chip" aria-pressed="${f === filter}" data-filter="${f}">${f === 'paid' ? 'To fulfil' : f.replace('_', ' ')}</button>`).join('')}</div>
         <div class="tbl"><table>
           <thead><tr><th>Order</th><th>Customer &amp; ship to</th><th>Items (CJ SKU)</th><th class="num">Total</th><th class="num">Profit</th><th>Fulfilment</th></tr></thead>
@@ -222,9 +223,11 @@
         try { await cj('forward', { id: b.dataset.forward }) } finally { await load() }
       })))
 
+      root.querySelector('[data-inventory]').onclick = (e) => run(e.currentTarget, async () => { await cj('inventory'); await load() })
+
       function productRow(p) {
         const s = d.sources.find((x) => x.slug === p.slug)
-        const ours = `<div class="prod"><img class="thumb" src="${esc(p.image)}" alt=""><div><b>${esc(p.name)}</b></div></div>`
+        const ours = `<div class="prod"><img class="thumb" src="${esc(p.image)}" alt=""><div><b>${esc(p.name)}</b><small>${p.inventory === undefined ? 'Inventory not checked' : `${p.inventory} units in CN · ${esc(new Date(p.inventoryCheckedAt).toLocaleString())}`}</small></div></div>`
         if (!s) return `<tr><td>${ours}</td><td class="muted">Not linked — placeholder price, can't be fulfilled</td><td></td><td></td><td></td><td></td>
           <td><div class="acts"><button class="btn sm" data-act="automatch" data-slug="${p.slug}" ${d.cjEnabled ? '' : 'disabled'}>Auto-match</button><button class="btn btn--ghost sm" data-act="search" data-slug="${p.slug}" ${d.cjEnabled ? '' : 'disabled'}>Search CJ</button></div></td></tr>`
         const landed = s.productCost + s.shippingCost

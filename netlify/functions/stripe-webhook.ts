@@ -3,8 +3,6 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../../db/index.js'
 import { orders } from '../../db/schema.js'
-import { cjEnabled } from '../../lib/cj.js'
-import { forwardOrder } from '../../lib/sourcing.js'
 
 function verify(payload: string, header: string, secret: string) {
   const parts = Object.fromEntries(header.split(',').map((kv) => kv.split('=') as [string, string]))
@@ -51,9 +49,8 @@ export default async (req: Request, context: Context) => {
         .where(and(eq(orders.publicId, orderId), eq(orders.status, 'pending_payment')))
         .returning()
 
-      // Create the CJ order automatically after payment. CJ's payType is fixed to create-only,
-      // so supplier payment remains a manual action in the CJ dashboard.
-      if (paid && cjEnabled()) context.waitUntil(forwardOrder(paid.publicId).catch((e) => console.error('CJ forward', paid.publicId, e.message)))
+      // Leave paid orders for explicit owner approval in the admin dashboard.
+
     }
   } else if (orderId && event.type === 'checkout.session.expired') {
     await db

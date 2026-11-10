@@ -2,7 +2,7 @@
 // order forwarding and tracking.
 import { and, asc, eq, isNull } from 'drizzle-orm'
 import { db } from '../db/index.js'
-import { orders, productSources } from '../db/schema.js'
+import { orders, productSources, settings } from '../db/schema.js'
 import { bySlug as baseBySlug, PRODUCTS, type Product } from './catalog.js'
 import { suggestPrice } from './pricing.js'
 import * as cj from './cj.js'
@@ -39,7 +39,14 @@ export async function catalog(): Promise<Map<string, Product>> {
     console.error('Loading CJ product links failed', e.message)
   }
   const sourceMap = new Map(rows.map((s) => [s.slug, s]))
+  const stockRows = await db.select().from(settings).where(eq(settings.key, 'cj_inventory')).catch(() => [])
+  const stock = (stockRows[0]?.value ?? {}) as Record<string, { quantity: number; checkedAt: string }>
   const map = new Map(PRODUCTS.map((p) => [p.slug, sourceMap.has(p.slug) ? applySource(p, sourceMap.get(p.slug)!) : p]))
+  for (const [slug, product] of map) {
+    const vid = sourceMap.get(slug)?.cjVid
+    const item = vid ? stock[vid] : undefined
+    if (item) Object.assign(product, { inventory: item.quantity, inventoryCheckedAt: item.checkedAt })
+  }
   cache = { at: Date.now(), map }
   return map
 }
@@ -52,7 +59,7 @@ export async function sources() {
 export async function linkProduct(slug: string, pid: string, vid?: string | null) {
   if (!baseBySlug.has(slug)) throw new Error('Unknown product')
   const product = await cj.getProduct(pid)
-  const variant = (vid && product.variants.find((v) => v.vid === vid)) || product.variants[0]
+  const variant = vid ? product.variants.find((v) => v.vid === vid) : product.variants[0]
   if (!variant) throw new Error('That CJ listing has no purchasable variants.')
   const ship = await cj.bestShipping([{ vid: variant.vid, quantity: 1 }])
   const [existing] = await db.select().from(productSources).where(eq(productSources.slug, slug)).limit(1)
@@ -189,4 +196,41 @@ export async function syncTracking(limit = 12) {
     }
   }
   return { checked: open.length, shipped }
+}
+
+// Update only inventory; preserve all product links, customer prices and supplier costs.
+export async function syncInventory() {
+  const rows = await sources()
+  const stock: Record<string, { quantity: number; checkedAt: string }> = {}
+  const [saved] = await db.select().from(settings).where(eq(settings.key, 'cj_inventory')).limit(1)
+  Object.assign(stock, saved?.value ?? {})
+  let updated = 0
+  const failed: string[] = []
+  for (const vid of new Set(rows.map((row) => row.cjVid))) {
+    try {
+      stock[vid] = { quantity: await cj.getInventory(vid), checkedAt: new Date().toISOString() }
+      updated++
+    } catch (e: any) {
+      failed.push(vid)
+      console.error('CJ inventory', vid, e.message)
+    }
+  }
+  await db.insert(settings).values({ key: 'cj_inventory', value: stock })
+    .onConflictDoUpdate({ target: settings.key, set: { value: stock, updatedAt: new Date() } })
+  cache = null
+  return { updated, failed }
+}
+
+// Check aggregate variant quantities before creating a Stripe session.
+export async function checkInventory(items: { slug: string; qty: number }[], products: Map<string, Product>) {
+  const quantities = new Map<string, number>()
+  for (const item of items) {
+    const vid = products.get(item.slug)?.supplier.vid
+    if (!vid) throw new Error('A product is not linked to CJ.')
+    quantities.set(vid, (quantities.get(vid) ?? 0) + Number(item.qty))
+  }
+  for (const [vid, quantity] of quantities) {
+    if (await cj.getInventory(vid) < quantity) return false
+  }
+  return true
 }

@@ -13,6 +13,8 @@ export type Product = {
   supplier: { name: string; sku: string; url: string; vid?: string | null }
   shipsIn: string
   cjQuery: string // search used to find the matching CJdropshipping listing
+  inventory?: number
+  inventoryCheckedAt?: string
   linked?: boolean // true once a real CJ variant supplies this product
 }
 

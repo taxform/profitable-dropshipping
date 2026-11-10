@@ -1,4 +1,5 @@
 // Minimal CJdropshipping API v2 client. Docs: https://developers.cjdropshipping.com
+import { chinaStock } from './inventory.js'
 import { eq } from 'drizzle-orm'
 import { db } from '../db/index.js'
 import { settings } from '../db/schema.js'
@@ -26,7 +27,7 @@ async function raw(path: string, init: RequestInit & { token?: string } = {}) {
     headers: { 'content-type': 'application/json', ...(init.token ? { 'CJ-Access-Token': init.token } : {}) },
   })
   const body = await res.json().catch(() => null)
-  if (!body || body.result === false || (body.code !== undefined && body.code !== 200)) {
+  if (!res.ok || !body || body.result === false || (body.code !== undefined && body.code !== 200)) {
     const err = new Error(`CJ: ${body?.message ?? `HTTP ${res.status}`}`) as Error & { code?: number }
     err.code = body?.code
     throw err
@@ -128,4 +129,8 @@ export async function createOrder(body: Record<string, unknown>) {
 
 export async function getOrder(orderId: string) {
   return api(`/shopping/order/getOrderDetail?orderId=${encodeURIComponent(orderId)}`)
+}
+
+export async function getInventory(vid: string): Promise<number> {
+  return chinaStock(await api(`/product/stock/queryByVid?vid=${encodeURIComponent(vid)}`))
 }
