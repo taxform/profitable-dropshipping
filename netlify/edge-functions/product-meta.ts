@@ -78,10 +78,10 @@ export default async (req: Request, context: any) => {
     ],
   })}<\/script>`
   // Server-rendered fallback so crawlers and no-JS clients see real content.
-  const noscript =
-    `<noscript><div class="wrap"><h1>${esc(product.name)}</h1>` +
+  const fallback =
+    `<div class="wrap" data-product-fallback><h1>${esc(product.name)}</h1>` +
     `<p>${esc(product.tagline)} ${esc(product.description)}</p>` +
-    `<p>Price: $${price}. Ships in ${esc(product.shipsIn)}.</p></div></noscript>`
+    `<p>Price: $${price}. Ships in ${esc(product.shipsIn)}.</p></div>`
   const extra = [
     `<meta property="og:type" content="product">`,
     `<meta property="og:url" content="${pageUrl}">`,
@@ -101,16 +101,15 @@ export default async (req: Request, context: any) => {
     productJsonLd,
     breadcrumbJsonLd,
   ].join('\n  ')
-  if (!html.includes('property="og:url"')) {
-    html = html.replace('</head>', `  ${extra}\n</head>`)
-  } else if (!html.includes('"@type":"Product"')) {
-    html = html.replace('</head>', `  ${productJsonLd}\n  ${breadcrumbJsonLd}\n</head>`)
-  }
-  if (!html.includes('<noscript>')) {
-    html = html.replace('<main', `${noscript}<main`)
-  }
+  // Replace generic template tags rather than appending duplicate metadata.
+  html = html.replace(/<meta\s+(?:property="og:[^"]*"|name="twitter:[^"]*"|name="robots")[^>]*>\s*/g, '')
+  html = html.replace('</head>', `  ${extra}\n</head>`)
+  // The template already has GTM's noscript iframe; it is unrelated to product content.
+  html = html.replace(/(<main\b[^>]*>)[\s\S]*?(<\/main>)/, `$1${fallback}$2`)
 
   const headers = new Headers(res.headers)
+  headers.delete('content-length')
+  headers.delete('etag')
   headers.set('content-type', 'text/html; charset=utf-8')
   return new Response(html, { status: res.status, headers })
 }

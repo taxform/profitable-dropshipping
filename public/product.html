@@ -85,7 +85,7 @@
       try { track('view_item', { currency: 'USD', value: Number((p.price / 100).toFixed(2)), items: [{ item_id: p.slug, item_name: p.name, item_category: p.category, price: Number((p.price / 100).toFixed(2)), quantity: 1 }] }) } catch {}
       document.title = `${p.name} — Skabba Deals`
       document.querySelector('meta[name=description]').content = desc
-      document.head.insertAdjacentHTML('beforeend', `<link rel="canonical" href="${url}">`)
+      document.querySelector('link[rel=canonical]').href = url
       setMeta('og:title', 'property', `${p.name} — Skabba Deals`)
       setMeta('og:description', 'property', desc)
       setMeta('og:url', 'property', url)
@@ -95,6 +95,12 @@
       setMeta('twitter:description', 'name', desc)
       setMeta('twitter:image', 'name', shareImg)
       setMeta('twitter:card', 'name', 'summary_large_image')
+      // Replace the server's structured data with the current catalog values.
+      document.querySelectorAll('script[type="application/ld+json"]').forEach((el) => {
+        try {
+          if (['Product', 'BreadcrumbList'].includes(JSON.parse(el.textContent)['@type'])) el.remove()
+        } catch {}
+      })
       document.head.insertAdjacentHTML('beforeend', `<script type="application/ld+json">${JSON.stringify({
         '@context': 'https://schema.org', '@type': 'Product', name: p.name, description: p.description, image: p.image.startsWith('http') ? p.image : `https://skabbadeals.com${p.image}`, sku: p.slug, category: p.category, brand: { '@type': 'Brand', name: 'Skabba Deals' },
         seller: { '@type': 'Organization', name: 'Skabba Deals', url: 'https://skabbadeals.com/' },
