@@ -65,7 +65,7 @@ export default async (req: Request) => {
     cjEnabled: cjEnabled(),
     // Supplier payment is intentionally never automated; CJ_AUTO_PAY is ignored by sourcing.
     cjAutoPay: false,
-    products: [...(await catalog()).values()].map((p) => ({ slug: p.slug, name: p.name, image: p.image, cjQuery: p.cjQuery, compareAt: p.compareAt })),
+    products: [...(await catalog()).values()].map((p) => ({ slug: p.slug, name: p.name, image: p.image, cjQuery: p.cjQuery, compareAt: p.compareAt, inventory: p.inventory, inventoryCheckedAt: p.inventoryCheckedAt })),
     sources: await sources(),
   })
 }
