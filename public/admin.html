@@ -229,7 +229,14 @@
         for (const [i, source] of d.sources.entries()) {
           status.textContent = `Checking inventory ${i + 1} of ${d.sources.length}…`
           try {
-            const result = await cj('inventory', { slug: source.slug })
+            // Separate serverless instances do not share the CJ client's throttle.
+            // Pace browser requests too, and retry transient CJ rate limits.
+            let result
+            for (let attempt = 0; attempt < 3; attempt++) {
+              await new Promise((resolve) => setTimeout(resolve, attempt ? 2500 : 1500))
+              result = await cj('inventory', { slug: source.slug })
+              if (!result.failed.length || !(result.errors || []).some((message) => /too many requests|qps limit/i.test(message))) break
+            }
             updated += result.updated
             if (result.failed.length) errors.push(`${source.slug}: ${(result.errors || ['CJ inventory check failed']).join('; ')}`)
           } catch (ex) {
@@ -239,7 +246,7 @@
         const summary = `Inventory updated for ${updated} of ${d.sources.length} products.`
         await load()
         root.querySelector('[data-cj-status]').textContent = summary
-        if (errors.length) alert(summary + '\\n' + errors.join('\\n'))
+        if (errors.length) alert(summary + '\n' + errors.join('\n'))
       })
 
       function productRow(p) {
