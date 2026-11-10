@@ -105,7 +105,7 @@
           </div>
           ${params.get('paid') ? `<section class="thanks-note" style="margin-top:24px">
             <p>We appreciate your business! If you have any questions, please email
-            <a href="mailto:hello@skabbadeals.com?subject=${encodeURIComponent('Order ' + o.id)}">hello@skabbadeals.com</a>.</p>
+            <a href="mailto:sales@skabbadeals.com?subject=${encodeURIComponent('Order ' + o.id)}">sales@skabbadeals.com</a>.</p>
           </section>` : ''}
           ${['paid', 'ordered', 'shipped', 'delivered', 'refunded'].includes(o.status) ? `<details class="status-card" data-portal style="margin-top:20px">
             <summary><b>Receipts, billing details &amp; payment methods</b></summary>
