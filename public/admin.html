@@ -223,7 +223,24 @@
         try { await cj('forward', { id: b.dataset.forward }) } finally { await load() }
       })))
 
-      root.querySelector('[data-inventory]').onclick = (e) => run(e.currentTarget, async () => { await cj('inventory'); await load() })
+      root.querySelector('[data-inventory]').onclick = (e) => run(e.currentTarget, async () => {
+        const errors = []
+        let updated = 0
+        for (const [i, source] of d.sources.entries()) {
+          status.textContent = `Checking inventory ${i + 1} of ${d.sources.length}…`
+          try {
+            const result = await cj('inventory', { slug: source.slug })
+            updated += result.updated
+            if (result.failed.length) errors.push(`${source.slug}: ${(result.errors || ['CJ inventory check failed']).join('; ')}`)
+          } catch (ex) {
+            errors.push(`${source.slug}: ${ex.message}`)
+          }
+        }
+        const summary = `Inventory updated for ${updated} of ${d.sources.length} products.`
+        await load()
+        root.querySelector('[data-cj-status]').textContent = summary
+        if (errors.length) alert(summary + '\\n' + errors.join('\\n'))
+      })
 
       function productRow(p) {
         const s = d.sources.find((x) => x.slug === p.slug)

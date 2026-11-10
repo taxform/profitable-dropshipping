@@ -199,26 +199,29 @@ export async function syncTracking(limit = 12) {
 }
 
 // Update only inventory; preserve all product links, customer prices and supplier costs.
-export async function syncInventory() {
-  const rows = await sources()
+export async function syncInventory(slug?: string) {
+  const rows = (await sources()).filter((row) => !slug || row.slug === slug)
+  if (slug && !rows.length) throw new Error('Product is not linked to CJ.')
   const stock: Record<string, { quantity: number; checkedAt: string }> = {}
   const [saved] = await db.select().from(settings).where(eq(settings.key, 'cj_inventory')).limit(1)
   Object.assign(stock, saved?.value ?? {})
   let updated = 0
   const failed: string[] = []
+  const errors: string[] = []
   for (const vid of new Set(rows.map((row) => row.cjVid))) {
     try {
       stock[vid] = { quantity: await cj.getInventory(vid), checkedAt: new Date().toISOString() }
       updated++
     } catch (e: any) {
       failed.push(vid)
+      errors.push(String(e.message ?? 'CJ inventory request failed'))
       console.error('CJ inventory', vid, e.message)
     }
   }
   await db.insert(settings).values({ key: 'cj_inventory', value: stock })
     .onConflictDoUpdate({ target: settings.key, set: { value: stock, updatedAt: new Date() } })
   cache = null
-  return { updated, failed }
+  return { updated, failed, errors }
 }
 
 // Check aggregate variant quantities before creating a Stripe session.

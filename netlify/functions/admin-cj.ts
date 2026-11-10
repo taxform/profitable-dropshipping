@@ -29,7 +29,8 @@ export default async (req: Request) => {
       case 'forward':
         return Response.json(await forwardOrder(String(b.id)))
       case 'inventory':
-        return Response.json(await syncInventory())
+        if (!slug) return Response.json({ error: 'Choose a product to sync.' }, { status: 400 })
+        return Response.json(await syncInventory(slug))
       case 'tracking':
         return Response.json(await syncTracking(15))
       default:
