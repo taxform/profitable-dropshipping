@@ -1,0 +1,7 @@
+Pods/
+*.xcodeproj/
+*.xcworkspace/
+xcuserdata/
+DerivedData/
+# Firebase config, downloaded per-developer from the Firebase console
+SkabbaDeals/GoogleService-Info.plist

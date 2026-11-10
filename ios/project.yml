@@ -1,0 +1,25 @@
+# XcodeGen spec — run `xcodegen` to generate SkabbaDeals.xcodeproj, then `pod install`.
+name: SkabbaDeals
+options:
+  bundleIdPrefix: com.skabbadeals
+  deploymentTarget:
+    iOS: "16.0"
+settings:
+  base:
+    SWIFT_VERSION: "5.9"
+    MARKETING_VERSION: "1.0"
+    CURRENT_PROJECT_VERSION: "1"
+targets:
+  SkabbaDeals:
+    type: application
+    platform: iOS
+    sources: [SkabbaDeals]
+    info:
+      path: SkabbaDeals/Info.plist
+      properties:
+        CFBundleDisplayName: Skabba Deals
+        UILaunchScreen: {}
+        UISupportedInterfaceOrientations: [UIInterfaceOrientationPortrait]
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: com.skabbadeals.app
