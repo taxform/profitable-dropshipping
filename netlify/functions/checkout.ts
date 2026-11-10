@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { db } from '../../db/index.js'
 import { orders } from '../../db/schema.js'
 import { quote } from '../../lib/pricing.js'
-import { catalog } from '../../lib/sourcing.js'
+import { catalog, checkInventory } from '../../lib/sourcing.js'
 import { eq } from 'drizzle-orm'
 
 const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
@@ -31,6 +31,13 @@ export default async (req: Request) => {
     if (!product.linked || !product.supplier.vid) {
       return Response.json({ error: `${product.name} is not connected to an available CJ product yet. Please try again later.` }, { status: 409 })
     }
+  }
+
+  try {
+    if (!await checkInventory(items, products)) return Response.json({ error: 'The requested quantity is no longer available. Please update your cart.' }, { status: 409 })
+  } catch (e: any) {
+    console.error('CJ inventory check', e.message)
+    return Response.json({ error: 'Unable to verify supplier inventory. Please try again shortly.' }, { status: 503 })
   }
 
   const q = quote(items, body.code, products)
