@@ -33,6 +33,11 @@ export default async (req: Request, context: any) => {
   )
 
   const price = (product.price / 100).toFixed(2)
+  // Delivery window from the catalog (kept in sync with the live API):
+  // e.g. "7–14 business days" -> transit 7-14 days. Falls back to 6-12.
+  const shipMatch = String(product.shipsIn || '').match(/(\d+)\s*[–-]\s*(\d+)/)
+  const transitMin = shipMatch ? Number(shipMatch[1]) : 6
+  const transitMax = shipMatch ? Number(shipMatch[2]) : 12
   const productJsonLd = `<script type="application/ld+json">${JSON.stringify({
     '@context': 'https://schema.org',
     '@type': 'Product',
@@ -57,7 +62,7 @@ export default async (req: Request, context: any) => {
         deliveryTime: {
           '@type': 'ShippingDeliveryTime',
           handlingTime: { '@type': 'QuantitativeValue', minValue: 1, maxValue: 2, unitCode: 'DAY' },
-          transitTime: { '@type': 'QuantitativeValue', minValue: 6, maxValue: 12, unitCode: 'DAY' },
+          transitTime: { '@type': 'QuantitativeValue', minValue: transitMin, maxValue: transitMax, unitCode: 'DAY' },
         },
       },
       hasMerchantReturnPolicy: {
