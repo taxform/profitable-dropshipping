@@ -79,6 +79,20 @@
                 items: (o.items || []).map((l) => ({ item_id: l.slug || l.name, item_name: l.name, quantity: l.qty, price: Number(((l.unit || 0) / 100).toFixed(2)) })),
               })
             }
+            // Google Ads uses a separate conversion event and destination.
+            // Only confirmed payments qualify; transaction_id also deduplicates in Ads.
+            const adsKey = 'sd-ads-purchase-' + o.id
+            let adsSent = false
+            try { adsSent = sessionStorage.getItem(adsKey) === '1' } catch {}
+            if (!adsSent && typeof window.gtag === 'function') {
+              window.gtag('event', 'conversion', {
+                send_to: 'AW-18560717085/s8yYCJua0rMdEJ2iuJJF',
+                currency: 'USD',
+                transaction_id: o.id,
+                value: Number((o.total / 100).toFixed(2)),
+              })
+              try { sessionStorage.setItem(adsKey, '1') } catch {}
+            }
           }
         } catch {}
         const flow = ['paid', 'ordered', 'shipped', 'delivered']
