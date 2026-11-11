@@ -1,12 +1,14 @@
 import type { Config } from '@netlify/functions'
 import { PRODUCTS } from '../../lib/catalog.js'
 
+
 const esc = (s: string) =>
   s
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
+
 
 // Google Merchant Center product feed (Shopping ads + free listings).
 // Feed URL after deploy: https://skabbadeals.com/merchant-feed.xml
@@ -16,10 +18,14 @@ export default async () => {
     const price = (p.price / 100).toFixed(2)
     const sale = `https://skabbadeals.com/products/${p.slug}`
     const image = p.image.startsWith('http') ? p.image : `https://skabbadeals.com${p.image}`
-    const salePrice =
-      p.compareAt > p.price
-        ? `    <g:sale_price>${(p.compareAt / 100).toFixed(2)} USD</g:sale_price>`
-        : ''
+    // Google Merchant Center requires sale_price < price. The store's
+    // selling price IS the sale price; compareAt is the regular ("was")
+    // price, so when a product is discounted the feed's price is the
+    // regular price and sale_price is what the shopper actually pays.
+    // (Previously this was backwards: sale_price was the higher compareAt.)
+    const onSale = p.compareAt > p.price
+    const regularPrice = onSale ? (p.compareAt / 100).toFixed(2) : price
+    const salePrice = onSale ? `    <g:sale_price>${price} USD</g:sale_price>` : ''
     return `  <item>
     <g:id>${esc(p.slug)}</g:id>
     <g:title>${esc(`${p.name} — ${p.tagline}`)}</g:title>
@@ -28,7 +34,7 @@ export default async () => {
     <g:image_link>${esc(image)}</g:image_link>
     <g:availability>in_stock</g:availability>
     <g:condition>new</g:condition>
-    <g:price>${price} USD</g:price>
+    <g:price>${regularPrice} USD</g:price>
 ${salePrice}
     <g:brand>Skabba Deals</g:brand>
     <g:mpn>${esc(p.supplier.sku)}</g:mpn>
@@ -42,10 +48,11 @@ ${salePrice}
       <g:min_handling_time>1</g:min_handling_time>
       <g:max_handling_time>2</g:max_handling_time>
       <g:min_transit_time>6</g:min_transit_time>
-      <g:max_transit_time>12</g:max_transit_time>
+      <g:max_transit_time>15</g:max_transit_time>
     </g:shipping>
   </item>`
   }).join('\n')
+
 
   const xml = `<?xml version="1.0" encoding="UTF-8"?>
 <rss version="2.0" xmlns:g="http://base.google.com/ns/1.0">
@@ -59,5 +66,6 @@ ${items}
 `
   return new Response(xml, { headers: { 'content-type': 'application/rss+xml; charset=utf-8', 'cache-control': 'public, max-age=3600' } })
 }
+
 
 export const config: Config = { path: '/merchant-feed.xml' }
