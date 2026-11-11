@@ -105,10 +105,10 @@ export default async (req: Request, context: any) => {
     `<meta name="twitter:image:alt" content="${esc(product.name)}">`,
     productJsonLd,
     breadcrumbJsonLd,
-  ].join('\n ')
+  ].join('\n  ')
   // Replace generic template tags rather than appending duplicate metadata.
   html = html.replace(/<meta\s+(?:property="og:[^"]*"|name="twitter:[^"]*"|name="robots")[^>]*>\s*/g, '')
-  html = html.replace('</head>', ` ${extra}\n</head>`)
+  html = html.replace('</head>', `  ${extra}\n</head>`)
   // The template already has GTM's noscript iframe; it is unrelated to product content.
   html = html.replace(/(<main\b[^>]*>)[\s\S]*?(<\/main>)/, `$1${fallback}$2`)
 
