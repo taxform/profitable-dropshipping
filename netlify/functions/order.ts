@@ -11,7 +11,7 @@ export default async (req: Request) => {
   return Response.json({
     id: o.publicId,
     status: o.status,
-    items: o.items.map(({ name, qty, unit }) => ({ name, qty, unit })),
+    items: o.items.map(({ slug, name, qty, unit }) => ({ slug, name, qty, unit })),
     subtotal: o.subtotal,
     discount: o.discount,
     shipping: o.shipping,
