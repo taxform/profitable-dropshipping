@@ -17,7 +17,7 @@ const shipsIn = (days: string) => {
 function applySource(p: Product, s: Source): Product {
   return {
     ...p,
-    price: s.price,
+    price: ['handheld-milk-frother', 'silicone-stretch-lids', 'glass-oil-mister'].includes(p.slug) ? p.price : s.price, // catalog (JSON-LD) price for these three
     cost: s.productCost + s.shippingCost,
     image: s.useCjImage && s.cjImage ? s.cjImage : p.image,
     shipsIn: shipsIn(s.shippingDays ?? '') ?? p.shipsIn,
