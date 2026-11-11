@@ -65,12 +65,22 @@
       if (!res.ok) {
         main.insertAdjacentHTML('beforeend', `<p class="err">We couldn't find order ${id.replace(/[<>&]/g, '')}. Check the number and try again.</p>`)
       } else {
-        // GA4 / Google Ads purchase conversion. Fires once per order (guarded by sessionStorage).
-        try {
-          if (params.get('paid') && (o.status === 'paid' || o.status === 'ordered' || o.status === 'shipped' || o.status === 'delivered')) {
-            const key = 'sd-purchase-' + o.id
-            if (!sessionStorage.getItem(key)) {
-              sessionStorage.setItem(key, '1')
+        // GA4 / Google Ads purchase conversion. Fires once per order.
+        // Dedupe is in localStorage (survives a new session) and each event
+        // has its own key, set only AFTER its gtag call, so a failed Ads
+        // call does not also block the GA4 retry. Google also dedupes on
+        // transaction_id. This block runs on every load of
+        // /order?id=…&paid=1 while the order is paid, so a slow Stripe
+        // webhook (the page polls below, up to ~50s) cannot lose the sale.
+        const PAID_STATUSES = ['paid', 'ordered', 'shipped', 'delivered']
+        const isPaid = PAID_STATUSES.includes(o.status)
+        const store = {
+          get(k) { try { return localStorage.getItem(k) || sessionStorage.getItem(k) } catch { return null } },
+          set(k) { try { localStorage.setItem(k, '1') } catch {} try { sessionStorage.setItem(k, '1') } catch {} },
+        }
+        if (params.get('paid') && isPaid) {
+          try {
+            if (!store.get('sd-purchase-' + o.id)) {
               track('purchase', {
                 currency: 'USD',
                 transaction_id: o.id,
@@ -78,23 +88,34 @@
                 shipping: Number(((o.shipping || 0) / 100).toFixed(2)),
                 items: (o.items || []).map((l) => ({ item_id: l.slug || l.name, item_name: l.name, quantity: l.qty, price: Number(((l.unit || 0) / 100).toFixed(2)) })),
               })
+              store.set('sd-purchase-' + o.id)
             }
-            // Google Ads uses a separate conversion event and destination.
-            // Only confirmed payments qualify; transaction_id also deduplicates in Ads.
-            const adsKey = 'sd-ads-purchase-' + o.id
-            let adsSent = false
-            try { adsSent = sessionStorage.getItem(adsKey) === '1' } catch {}
-            if (!adsSent && typeof window.gtag === 'function') {
+          } catch {}
+          // Google Ads uses a separate conversion event and destination.
+          // Only confirmed payments qualify; transaction_id also deduplicates in Ads.
+          // WARNING — UNVERIFIED LABEL: 'AW-18560717085/s8yYCJua0rMdEJ2iuJJF'
+          // first appeared in commit 42182bb with no source in the repo,
+          // docs, or email. The AW ID itself is on every page (added by
+          // Netlify's Google Ads integration, Nov 9), but the conversion
+          // label has never been confirmed against the Ads account that
+          // owns AW-18560717085. If that label does not exist in that
+          // account, Ads silently drops this event. Dan must confirm or
+          // create the "Purchase" conversion action in Google Ads and
+          // paste its real label here. The GA4 purchase event above is
+          // the reliable fallback: import it in Ads (Goals → Conversions
+          // → Import → GA4) as the Primary purchase conversion.
+          try {
+            if (!store.get('sd-ads-purchase-' + o.id) && typeof window.gtag === 'function') {
               window.gtag('event', 'conversion', {
                 send_to: 'AW-18560717085/s8yYCJua0rMdEJ2iuJJF',
                 currency: 'USD',
                 transaction_id: o.id,
                 value: Number((o.total / 100).toFixed(2)),
               })
-              try { sessionStorage.setItem(adsKey, '1') } catch {}
+              store.set('sd-ads-purchase-' + o.id)
             }
-          }
-        } catch {}
+          } catch {}
+        }
         const flow = ['paid', 'ordered', 'shipped', 'delivered']
         const at = flow.indexOf(o.status)
         const headline = {
@@ -188,7 +209,7 @@
           } catch {}
         }
         const tries = Number(sessionStorage.getItem('sd-poll-' + o.id) || 0)
-        if (o.status === 'pending_payment' && params.get('paid') && tries < 6) {
+        if (o.status === 'pending_payment' && params.get('paid') && tries < 20) {
           sessionStorage.setItem('sd-poll-' + o.id, tries + 1)
           setTimeout(() => location.reload(), 2500)
         }
