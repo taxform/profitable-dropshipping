@@ -5,6 +5,15 @@ export const track = (name, params = {}) => {
     if (typeof window !== 'undefined' && typeof window.gtag === 'function') window.gtag('event', name, params)
   } catch {}
 }
+// Google Ads "Add to cart" conversion action. Paste the label from the Google
+// Ads event snippet (the part after the slash in send_to: 'AW-18560717085/LABEL').
+// While it is empty, no Ads add-to-cart conversion is sent.
+const ADS_ID = 'AW-18560717085'
+const ADS_ADD_TO_CART_LABEL = ''
+const adsAddToCart = (value) => {
+  if (!ADS_ADD_TO_CART_LABEL) return
+  track('conversion', { send_to: `${ADS_ID}/${ADS_ADD_TO_CART_LABEL}`, currency: 'USD', ...(value ? { value } : {}) })
+}
 const gtagItems = (lines) =>
   (lines || []).map((l) => ({
     item_id: l.slug,
@@ -42,13 +51,18 @@ export function addToCart(slug, qty = 1, { open = true } = {}) {
   getCatalog()
     .then(({ products }) => {
       const p = products.find((x) => x.slug === slug)
+      const value = Number((((p?.price ?? 0) * qty) / 100).toFixed(2))
+      adsAddToCart(value)
       track('add_to_cart', {
         currency: 'USD',
-        value: Number((((p?.price ?? 0) * qty) / 100).toFixed(2)),
+        value,
         items: [{ item_id: slug, item_name: p?.name ?? slug, quantity: qty, price: Number((((p?.price ?? 0) / 100).toFixed(2))) }],
       })
     })
-    .catch(() => track('add_to_cart', { currency: 'USD', items: [{ item_id: slug, quantity: qty }] }))
+    .catch(() => {
+      adsAddToCart()
+      track('add_to_cart', { currency: 'USD', items: [{ item_id: slug, quantity: qty }] })
+    })
 }
 function setQty(slug, qty) {
   state.items = state.items.map((i) => (i.slug === slug ? { ...i, qty } : i)).filter((i) => i.qty > 0)
