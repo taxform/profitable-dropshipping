@@ -21,3 +21,10 @@ test('thank-you page sends the Ads conversion with the order id for deduplicatio
   assert.match(page, /send_to: 'AW-18560717085\//)
   assert.match(page, /transaction_id: o\.id/)
 })
+
+test('add to cart sends the Google Ads add-to-cart conversion through one helper', () => {
+  const app = readFileSync('public/app.js', 'utf8')
+  assert.match(app, /const ADS_ADD_TO_CART_LABEL = /)
+  assert.match(app, /send_to: `\$\{ADS_ID\}\/\$\{ADS_ADD_TO_CART_LABEL\}`/)
+  assert.equal((app.match(/adsAddToCart\(/g) || []).length, 2)
+})
