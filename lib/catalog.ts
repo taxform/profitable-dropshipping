@@ -30,7 +30,10 @@ export const PRODUCTS: Product[] = [
     bullets: ['Ceramic burrs that never rust', '6 coarseness settings', 'USB-C, ~200 uses per charge', 'Works with pepper, salt and dried spices'],
     category: 'Cook',
     price: 9399,
-    compareAt: 4999,
+    // No verified reference ("was") price for this product: compareAt must
+    // never sit below the selling price, or a future surface could show a
+    // bogus discount. Equal to price = no was-price shown.
+    compareAt: 9399,
     cost: 940,
     image: '/images/spice-grinder.png',
     supplier: { name: SUPPLIER, sku: 'SD-GRND-01', url: '' },
@@ -62,7 +65,9 @@ export const PRODUCTS: Product[] = [
     bullets: ['Solid acacia, 16 in / 40 cm', 'Hidden rare-earth magnets', 'Holds 6–8 knives', 'Screw or no-drill mounting'],
     category: 'Organize',
     price: 14899,
-    compareAt: 4500,
+    // No verified reference ("was") price for this product: compareAt must
+    // never sit below the selling price. Equal to price = no was-price shown.
+    compareAt: 14899,
     cost: 720,
     image: '/images/knife-strip.png',
     supplier: { name: SUPPLIER, sku: 'SD-KNFS-03', url: '' },
@@ -94,7 +99,9 @@ export const PRODUCTS: Product[] = [
     bullets: ['Fits sinks up to 20.5 in / 52 cm', 'Heat-safe to 200°C', 'Rolls up to drawer size', 'Dishwasher safe'],
     category: 'Organize',
     price: 3999,
-    compareAt: 3499,
+    // No verified reference ("was") price for this product: compareAt must
+    // never sit below the selling price. Equal to price = no was-price shown.
+    compareAt: 3999,
     cost: 610,
     image: '/images/drying-rack.png',
     supplier: { name: SUPPLIER, sku: 'SD-RACK-05', url: '' },

@@ -26,6 +26,16 @@ test('merchant feed rule: sale_price is always below price for current catalog',
   }
 })
 
+test('catalog: a "was" price must never sit below the selling price', () => {
+  // Stale compareAt values (e.g. $49.99 on a $93.99 grinder) were once in
+  // the static catalog. publicProduct() filtered them for the API, but the
+  // raw catalog is the source of truth for the feed and the edge function,
+  // so a bogus was-price must not exist there at all.
+  for (const p of PRODUCTS) {
+    assert.ok(p.compareAt >= p.price, `${p.slug}: compareAt $${(p.compareAt / 100).toFixed(2)} is below selling price $${(p.price / 100).toFixed(2)}`)
+  }
+})
+
 test('merchant feed: transit window matches the shipping page (6–15 days)', () => {
   const feedSource = readFileSync('netlify/functions/merchant-feed.ts', 'utf8')
   assert.ok(feedSource.includes('<g:min_transit_time>6</g:min_transit_time>'))

@@ -82,7 +82,7 @@
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M2SWR6SS" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-MNG2HZ2W" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
-  <div class="funnel-bar">Today's bundle prices refresh at midnight — <b>save up to 20%</b> when you bundle · <span data-countdown>--:--:--</span> left</div>
+  <div class="funnel-bar">Bundle &amp; save — <b>buy 2, save 10% · 3+, save 20%</b>, applied automatically</div>
   <header class="header"><div class="wrap">
     <a class="logo" href="/">Skabba <em>Deals</em></a>
     <span class="muted" style="font-size:13px">Secure checkout · 30-day returns</span>
@@ -246,15 +246,7 @@
       refresh()
     })
     await refresh()
-
-    // Evergreen daily countdown for today's bundle pricing.
-    const tick = () => {
-      const now = new Date(); const end = new Date(now); end.setHours(23, 59, 59, 999)
-      const s = Math.max(0, Math.floor((end - now) / 1000))
-      const h = String(Math.floor(s / 3600)).padStart(2, '0'), m = String(Math.floor((s % 3600) / 60)).padStart(2, '0'), ss = String(s % 60).padStart(2, '0')
-      document.querySelectorAll('[data-countdown]').forEach((el) => (el.textContent = `${h}:${m}:${ss}`))
-    }
-    tick(); setInterval(tick, 1000)
+    // No countdown: the bundle discount is permanent, so no timer is shown.
 
     // Sticky mobile CTA appears once the order box scrolls out of view.
     const sticky = $('[data-sticky]')
