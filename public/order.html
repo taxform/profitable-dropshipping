@@ -139,7 +139,7 @@
             <summary><b>Receipts, billing details &amp; payment methods</b></summary>
             <p class="muted" style="margin:10px 0">Open your secure Stripe billing portal. Confirm the email you used at checkout.</p>
             <form data-portal-form style="display:flex;gap:8px;flex-wrap:wrap">
-              <input class="field" type="email" name="email" required placeholder="you@example.com" aria-label="Checkout email" style="flex:1;min-width:220px">
+              <input class="field" type="email" name="email" required autocomplete="email" placeholder="you@example.com" aria-label="Checkout email" style="flex:1;min-width:220px">
               <button class="btn" type="submit">Manage billing</button>
             </form><div class="err" data-portal-err></div>
             <p class="muted" style="font-size:13px;margin:8px 0 0">Or <a href="https://billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00" rel="noopener">sign in with a one-time email link</a> to see all your purchases.</p>
@@ -181,7 +181,7 @@
                 <h2 style="font-size:28px;margin:8px 0">Add the ${esc2(extra.name)} for ${money(extra.price)}</h2>
                 <p>${esc2(extra.tagline)} Ships with tracked delivery, covered by the same 30-day guarantee.</p>
                 <form data-upsell-form style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
-                  <input class="field" type="email" name="email" required placeholder="you@example.com" aria-label="Email address" style="flex:1;min-width:220px" value="${esc2(localStorage.getItem('sd-email') || '')}">
+                  <input class="field" type="email" name="email" required autocomplete="email" placeholder="you@example.com" aria-label="Email address" style="flex:1;min-width:220px" value="${esc2(localStorage.getItem('sd-email') || '')}">
                   <button class="btn" type="submit">Add it · ${money(extra.price)}</button>
                 </form><div class="err" data-upsell-err></div>
                 <p class="muted" style="font-size:12px;margin:8px 0 0">Starts a separate express checkout — your original order is untouched.</p>
@@ -192,11 +192,19 @@
                 if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { slot.querySelector('[data-upsell-err]').textContent = 'Enter your email so we can send tracking.'; return }
                 try { localStorage.setItem('sd-email', email) } catch {}
                 const btn = e.target.querySelector('button')
+                const label = btn.textContent
+                const upErr = slot.querySelector('[data-upsell-err]')
+                upErr.textContent = ''
                 btn.disabled = true; btn.textContent = 'Opening secure checkout…'
-                const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, items: [{ slug: extra.slug, qty: 1 }], funnel: params.get('funnel') }) })
-                const data = await res.json()
-                if (!res.ok) throw new Error(data.error || 'Checkout failed')
-                location.href = data.redirect
+                try {
+                  const res = await fetch('/api/checkout', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, items: [{ slug: extra.slug, qty: 1 }], funnel: params.get('funnel') }) })
+                  const data = await res.json()
+                  if (!res.ok) throw new Error(data.error || 'Checkout failed')
+                  location.href = data.redirect
+                } catch (x) {
+                  upErr.textContent = x.message || 'Checkout failed'
+                  btn.disabled = false; btn.textContent = label
+                }
               })
             }
           } catch {}

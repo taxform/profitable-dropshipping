@@ -100,7 +100,7 @@ function chrome() {
       <div><a class="logo" href="/">Skabba <em>Deals</em></a><p class="muted" style="max-width:26em">Small kitchen tools that earn their counter space. Picked, tested and shipped tracked to your door.</p></div>
       <div><h4>Shop</h4><ul><li><a href="/#shop">All gadgets</a></li><li><a href="/#bundle">Bundle &amp; save</a></li><li><a href="/guides/">Kitchen guides</a></li><li><a href="/order">Track an order</a></li><li><a href="https://billing.stripe.com/p/login/5kQaEQf4x0J27SPfnde7m00" rel="noopener">Billing &amp; receipts</a></li><li><a href="https://hub.stay22.com/referral/payrolltaxreform/travel" target="_blank" rel="sponsored noopener">Travel deals</a></li><li><a href="https://hub.stay22.com/referral/payrolltaxreform/retail" target="_blank" rel="sponsored noopener">Retail deals</a></li><li><a href="https://go.stay22.com/payrolltaxreform/gNHfcNOT7g" target="_blank" rel="sponsored noopener">Miami Beach stays</a></li><li><a href="https://sharegoogleworkspace.advocate.impact.com/mzZdRvc" target="_blank" rel="sponsored noopener">Google Workspace deal</a></li></ul></div>
       <div><h4>Help</h4><ul><li><a href="/shipping">Shipping</a></li><li><a href="/returns">Returns &amp; refunds</a></li><li><a href="/contact">Contact</a></li><li><a href="/privacy">Privacy</a></li><li><a href="/terms">Terms</a></li></ul></div>
-      <div class="footer-signup"><div><h4>Get 10% off your first order</h4><p>One email a month with new gadgets and member prices.</p></div><div><form data-signup="footer"><input type="email" name="email" required placeholder="you@example.com" aria-label="Email address"><button class="btn" type="submit">Get the code</button></form><div class="msg" role="status"></div></div></div>
+      <div class="footer-signup"><div><h4>Get 10% off your first order</h4><p>One email a month with new gadgets and member prices.</p></div><div><form data-signup="footer"><input type="email" name="email" required autocomplete="email" placeholder="you@example.com" aria-label="Email address"><button class="btn" type="submit">Get the code</button></form><div class="msg" role="status"></div></div></div>
       <div class="fine"><span>© ${new Date().getFullYear()} Skabba Deals · skabbadeals.com</span><span>Prices in USD · Payments secured by Stripe</span></div>
     </div></footer>
     <div class="scrim" data-close-cart></div>
@@ -190,13 +190,21 @@ async function renderDrawer() {
     </form>`
 
   body.querySelector('[data-apply-code]').onclick = () => applyCode(body.querySelector('[name=code]').value)
-  body.querySelector('[data-checkout]').onsubmit = checkout
+  const checkoutForm = body.querySelector('[data-checkout]')
+  checkoutForm.onsubmit = checkout
+  // Remember the email as it's typed so re-rendering the drawer (quantity change, code applied) doesn't wipe it,
+  // and clear the error styling once the shopper starts correcting it.
+  checkoutForm.email.addEventListener('input', () => {
+    checkoutForm.email.classList.remove('invalid')
+    checkoutForm.querySelector('[data-checkout-err]').textContent = ''
+    try { localStorage.setItem('sd-email', checkoutForm.email.value.trim()) } catch {}
+  })
 }
 
 async function checkout(e) {
   e.preventDefault()
   const form = e.currentTarget
-  const email = form.email.value.trim()
+  const email = form.email.value.trim().toLowerCase()
   const err = form.querySelector('[data-checkout-err]')
   const btn = form.querySelector('button[type=submit]')
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
@@ -205,7 +213,9 @@ async function checkout(e) {
     form.email.focus()
     return
   }
-  localStorage.setItem('sd-email', email)
+  form.email.classList.remove('invalid')
+  err.textContent = ''
+  try { localStorage.setItem('sd-email', email) } catch {}
   try {
     const q = state.quote
     if (q?.lines?.length) track('begin_checkout', { currency: 'USD', value: Number((q.total / 100).toFixed(2)), items: gtagItems(q.lines) })
@@ -232,11 +242,24 @@ function wireSignup() {
     form.addEventListener('submit', async (e) => {
       e.preventDefault()
       const msg = form.parentElement.querySelector('.msg')
-      const res = await fetch('/api/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email: form.email.value, source: form.dataset.signup }) })
-      const data = await res.json()
-      if (!res.ok) return (msg.textContent = data.error)
+      const btn = form.querySelector('button[type=submit]')
+      const email = form.email.value.trim().toLowerCase()
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { msg.textContent = 'Enter a valid email address.'; form.email.focus(); return }
+      msg.textContent = ''
+      btn.disabled = true
+      let data
+      try {
+        const res = await fetch('/api/subscribe', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ email, source: form.dataset.signup }) })
+        data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Could not sign you up. Please try again.')
+      } catch (ex) {
+        msg.textContent = ex.message || 'Could not sign you up. Please try again.'
+        return
+      } finally {
+        btn.disabled = false
+      }
       track('generate_lead', { method: 'newsletter' })
-      msg.innerHTML = `You're in. Use <span class="code">${data.code}</span> for 10% off — we've added it to your cart.`
+      msg.innerHTML = `You're in. Use <span class="code">${esc(data.code)}</span> for 10% off — we've added it to your cart.`
       applyCode(data.code)
       form.reset()
     })

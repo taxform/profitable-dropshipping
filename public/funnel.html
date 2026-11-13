@@ -267,6 +267,7 @@
       const email = form.email.value.trim().toLowerCase()
       const err = $('[data-err]')
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { form.email.classList.add('invalid'); err.textContent = 'Enter your email so we can send tracking.'; form.email.focus(); return }
+      form.email.classList.remove('invalid'); err.textContent = ''
       try { localStorage.setItem('sd-email', email) } catch {}
       const btn = $('[data-cta]')
       btn.disabled = true; btn.textContent = 'Opening secure checkout…'
@@ -283,6 +284,11 @@
         location.href = data.redirect
       } catch (ex) { err.textContent = ex.message; btn.disabled = false; btn.textContent = 'Try again' }
     })
+    {
+      const f = document.querySelector('[data-funnel]')
+      try { if (!f.email.value) f.email.value = localStorage.getItem('sd-email') || '' } catch {}
+      f.email.addEventListener('input', () => { f.email.classList.remove('invalid'); $('[data-err]').textContent = '' })
+    }
     if (params.get('checkout') === 'cancelled') {
       $('[data-err]').textContent = 'Checkout was cancelled — nothing was charged. Your bundle is still reserved above.'
     }
