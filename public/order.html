@@ -69,13 +69,9 @@
       if (!res.ok) {
         main.insertAdjacentHTML('beforeend', `<p class="err">We couldn't find order ${id.replace(/[<>&]/g, '')}. Check the number and try again.</p>`)
       } else {
-        // GA4 / Google Ads purchase conversion. Fires once per order.
-        // Dedupe is in localStorage (survives a new session) and each event
-        // has its own key, set only AFTER its gtag call, so a failed Ads
-        // call does not also block the GA4 retry. Google also dedupes on
-        // transaction_id. This block runs on every load of
-        // /order?id=…&paid=1 while the order is paid, so a slow Stripe
-        // webhook (the page polls below, up to ~50s) cannot lose the sale.
+        // Confirm payment from the server before sending purchase events.
+        // GA4 keeps its existing browser dedupe; Ads retries on return-page
+        // reloads and uses the unique order ID for platform deduplication.
         const PAID_STATUSES = ['paid', 'ordered', 'shipped', 'delivered']
         const isPaid = PAID_STATUSES.includes(o.status)
         const store = {
@@ -95,18 +91,12 @@
               store.set('sd-purchase-' + o.id)
             }
           } catch {}
-          // Google Ads uses a separate conversion event and destination.
-          // Only confirmed payments qualify; transaction_id also deduplicates in Ads.
-          // AW-18560717085 is confirmed as the owner's Ads account. The
-          // label after the slash has not been confirmed against that
-          // account; if it is wrong, Ads ignores this hit. The GA4
-          // 'purchase' event above is also sent to the AW destination
-          // (gtag events without send_to go to every configured ID), so a
-          // conversion action built on it, or a GA4 import, still records.
+          // Send the confirmed purchase on each successful return-page load.
+          // A queued gtag call is not a delivery receipt. Do not permanently
+          // suppress retries in browser storage; Google Ads deduplicates this
+          // conversion action using the stable, unique transaction_id.
           try {
-            if (!store.get('sd-ads-purchase-' + o.id) && typeof window.gtag === 'function') {
-              // Enhanced conversions: gtag hashes the email (SHA-256) before
-              // sending, letting Ads match sales when cookies are blocked.
+            if (typeof window.gtag === 'function') {
               let email = ''
               try { email = (localStorage.getItem('sd-email') || '').trim().toLowerCase() } catch {}
               if (email) window.gtag('set', 'user_data', { email })
@@ -116,7 +106,6 @@
                 transaction_id: o.id,
                 value: Number((o.total / 100).toFixed(2)),
               })
-              store.set('sd-ads-purchase-' + o.id)
             }
           } catch {}
         }
