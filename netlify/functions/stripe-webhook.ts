@@ -3,6 +3,7 @@ import { createHmac, timingSafeEqual } from 'node:crypto'
 import { and, eq } from 'drizzle-orm'
 import { db } from '../../db/index.js'
 import { orders } from '../../db/schema.js'
+import { markPaidFromSession } from '../../lib/payment.js'
 
 function verify(payload: string, header: string, secret: string) {
   const parts = Object.fromEntries(header.split(',').map((kv) => kv.split('=') as [string, string]))
@@ -34,24 +35,8 @@ export default async (req: Request, context: Context) => {
   const orderId = session?.metadata?.order_id ?? session?.client_reference_id
 
   if (orderId && (event.type === 'checkout.session.completed' || event.type === 'checkout.session.async_payment_succeeded')) {
-    if (session.payment_status === 'paid') {
-      const details = session.collected_information?.shipping_details ?? session.shipping_details ?? null
-      const [paid] = await db
-        .update(orders)
-        .set({
-          status: 'paid',
-          paidAt: new Date(),
-          updatedAt: new Date(),
-          stripeCustomerId: typeof session.customer === 'string' ? session.customer : (session.customer?.id ?? null),
-          name: details?.name ?? session.customer_details?.name ?? null,
-          shippingAddress: details?.address ? { ...details.address, phone: session.customer_details?.phone ?? null } : null,
-        })
-        .where(and(eq(orders.publicId, orderId), eq(orders.status, 'pending_payment')))
-        .returning()
-
-      // Leave paid orders for explicit owner approval in the admin dashboard.
-
-    }
+    // Paid orders wait for explicit owner approval in the admin dashboard.
+    await markPaidFromSession(orderId, session)
   } else if (orderId && event.type === 'checkout.session.expired') {
     await db
       .update(orders)
