@@ -41,7 +41,7 @@
 </head>
 <body>
 <!-- Google Tag Manager (noscript) -->
-<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-ABCDEFGH" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-M2SWR6SS" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 <!-- End Google Tag Manager (noscript) -->
   <main class="wrap prose" data-order>
     <h1>Track an order</h1>
@@ -93,19 +93,19 @@
           } catch {}
           // Google Ads uses a separate conversion event and destination.
           // Only confirmed payments qualify; transaction_id also deduplicates in Ads.
-          // WARNING — UNVERIFIED LABEL: 'AW-18560717085/s8yYCJua0rMdEJ2iuJJF'
-          // first appeared in commit 42182bb with no source in the repo,
-          // docs, or email. The AW ID itself is on every page (added by
-          // Netlify's Google Ads integration, Nov 9), but the conversion
-          // label has never been confirmed against the Ads account that
-          // owns AW-18560717085. If that label does not exist in that
-          // account, Ads silently drops this event. Dan must confirm or
-          // create the "Purchase" conversion action in Google Ads and
-          // paste its real label here. The GA4 purchase event above is
-          // the reliable fallback: import it in Ads (Goals → Conversions
-          // → Import → GA4) as the Primary purchase conversion.
+          // AW-18560717085 is confirmed as the owner's Ads account. The
+          // label after the slash has not been confirmed against that
+          // account; if it is wrong, Ads ignores this hit. The GA4
+          // 'purchase' event above is also sent to the AW destination
+          // (gtag events without send_to go to every configured ID), so a
+          // conversion action built on it, or a GA4 import, still records.
           try {
             if (!store.get('sd-ads-purchase-' + o.id) && typeof window.gtag === 'function') {
+              // Enhanced conversions: gtag hashes the email (SHA-256) before
+              // sending, letting Ads match sales when cookies are blocked.
+              let email = ''
+              try { email = (localStorage.getItem('sd-email') || '').trim().toLowerCase() } catch {}
+              if (email) window.gtag('set', 'user_data', { email })
               window.gtag('event', 'conversion', {
                 send_to: 'AW-18560717085/s8yYCJua0rMdEJ2iuJJF',
                 currency: 'USD',
