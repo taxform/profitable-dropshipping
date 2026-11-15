@@ -1,3 +1,4 @@
+
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:image="http://www.google.com/schemas/sitemap-image/1.1">
   <url><loc>https://skabbadeals.com/</loc><lastmod>2026-11-11</lastmod><changefreq>daily</changefreq><priority>1.0</priority></url>
@@ -19,4 +20,5 @@
   <url><loc>https://skabbadeals.com/guides/small-kitchen-organization-ideas</loc><lastmod>2026-11-11</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://skabbadeals.com/images/knife-strip.png</image:loc><image:title>Small-Kitchen Organization Ideas</image:title></image:image></url>
   <url><loc>https://skabbadeals.com/guides/fresh-pepper-spice-grinder-guide</loc><lastmod>2026-11-11</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://skabbadeals.com/images/spice-grinder.png</image:loc><image:title>Fresh-Ground Pepper Guide</image:title></image:image></url>
   <url><loc>https://skabbadeals.com/guides/air-fryer-oil-sprayer-guide</loc><lastmod>2026-11-11</lastmod><changefreq>monthly</changefreq><priority>0.8</priority><image:image><image:loc>https://skabbadeals.com/images/oil-sprayer.png</image:loc><image:title>Air-Fryer Oil Guide</image:title></image:image></url>
+<url><loc>https://skabbadeals.com/tools/gadget-finder.html</loc><lastmod>2026-11-15</lastmod><changefreq>monthly</changefreq><priority>0.8</priority></url>
 </urlset>
